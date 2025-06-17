@@ -73,7 +73,7 @@ Implements caching to respect N2YO API rate limits:
 Create a `.env` file with:
 
 ```env
-PORT=3001
+PORT=5000
 FRONTEND_URL=http://localhost:3000
 N2YO_API_KEY=your_api_key_here
 N2YO_BASE_URL=https://api.n2yo.com/rest/v1/satellite
@@ -98,7 +98,7 @@ npm install
 npm run dev
 ```
 
-3 Server will be available at `http://localhost:3001`
+3 Server will be available at `http://localhost:5000`
 
 ## Error Handling
 

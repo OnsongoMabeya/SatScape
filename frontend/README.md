@@ -80,7 +80,7 @@ The `api.js` utility provides methods for:
 Create a `.env.local` file with:
 
 ```env
-NEXT_PUBLIC_API_URL=http://localhost:3001/api
+NEXT_PUBLIC_API_URL=http://localhost:5000/api
 ```
 
 ## Available Scripts
