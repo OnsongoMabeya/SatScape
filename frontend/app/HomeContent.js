@@ -1,8 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
-import { Box, Container, Paper } from '@mui/material';
-import Grid from '@mui/material/Unstable_Grid2';
+import { Box, Container, Paper, Grid } from '@mui/material';
 import Globe from '../components/Globe';
 import LocationInput from '../components/LocationInput';
 import SatelliteSearch from '../components/SatelliteSearch';
