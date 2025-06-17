@@ -86,19 +86,19 @@ N2YO_BASE_URL=https://api.n2yo.com/rest/v1/satellite
 
 ## Development
 
-1. Install dependencies:
+1 Install dependencies:
 
 ```bash
 npm install
 ```
 
-2. Start development server:
+2 Start development server:
 
 ```bash
 npm run dev
 ```
 
-3. Server will be available at http://localhost:3001
+3 Server will be available at `http://localhost:3001`
 
 ## Error Handling
 
@@ -122,9 +122,10 @@ npm run dev
 npm install --production
 ```
 
-2. Set environment variables
+2 Set environment variables
 
-3. Start the server:
+3 Start the server:
+
 ```bash
 npm start
 ```

@@ -28,25 +28,25 @@ A real-time satellite tracking application that visualizes satellites currently 
 
 ## Quick Start
 
-1. Clone the repository:
+1 Clone the repository:
 
 ```bash
 git clone git@github.com:OnsongoMabeya/SatScape.git
 cd SatScape
 ```
 
-2. Install dependencies for both frontend and backend:
+2 Install dependencies for both frontend and backend:
 
 ```bash
 npm run install:all
 ```
 
-3. Set up environment variables:
+3 Set up environment variables:
 
-   - Copy `.env.example` to `.env` in both frontend and backend directories
-   - Add your N2YO API key to `backend/.env`
+- Copy `.env.example` to `.env` in both frontend and backend directories
+- Add your N2YO API key to `backend/.env`
 
-4. Start both frontend and backend:
+4 Start both frontend and backend:
 
 ```bash
 npm run dev
@@ -54,8 +54,8 @@ npm run dev
 
 The application will be available at:
 
-- Frontend: http://localhost:3000
-- Backend API: http://localhost:3001
+- Frontend: `http://localhost:3000`
+- Backend API: `http://localhost:3001`
 
 ## Available Scripts
 
@@ -95,7 +95,3 @@ The N2YO API has the following rate limits:
 3. Commit your changes (`git commit -m 'Add some amazing feature'`)
 4. Push to the branch (`git push origin feature/amazing-feature`)
 5. Open a Pull Request
-
-## License
-
-This project is licensed under the MIT License - see the LICENSE file for details
