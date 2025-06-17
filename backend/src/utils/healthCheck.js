@@ -13,7 +13,8 @@ class HealthCheck {
     async checkN2YOApi() {
         try {
             // Test N2YO API with a simple request
-            const response = await axios.get(`${process.env.N2YO_BASE_URL}/positions/${25544}/41.702/-76.014/0/1/&apiKey=${process.env.N2YO_API_KEY}`);
+            // Use ISS (NORAD ID: 25544) as test satellite
+            const response = await axios.get(`${process.env.N2YO_BASE_URL}/positions/25544/41.702/-76.014/0/1?apiKey=${process.env.N2YO_API_KEY}`);
             
             const isHealthy = response.status === 200 && response.data;
             this.status.n2yo = isHealthy;
