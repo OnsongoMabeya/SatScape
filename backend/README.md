@@ -17,6 +17,49 @@ backend/
 └── [config files]          # Configuration files
 ```
 
+## Health Monitoring
+
+### Health Check Endpoints
+
+#### GET /api/health
+
+- Returns current health status of the system
+- Includes uptime and memory usage
+- No authentication required
+
+#### GET /api/health/check
+
+- Performs a live check of N2YO API connectivity
+- Returns detailed status including any errors
+- Response codes:
+  - 200: All systems healthy
+  - 503: N2YO API unavailable
+  - 500: Internal server error
+
+### Logging System
+
+Logs are stored in the `logs` directory:
+
+- `combined.log`: All logs
+- `error.log`: Error logs only
+- `health.log`: Health check logs
+
+Log information includes:
+
+- Timestamp
+- Log level
+- Request details (method, path, query)
+- Error details when applicable
+- Health check results
+
+### Automatic Monitoring
+
+- Initial health check on server start
+- Periodic health checks every 5 minutes
+- Graceful shutdown handling
+- Request logging for all API endpoints
+- Error tracking with stack traces
+
 ## API Endpoints
 
 ### GET /api/satellites/above
