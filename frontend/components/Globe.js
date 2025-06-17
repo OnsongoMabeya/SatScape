@@ -2,12 +2,15 @@
 
 import { useEffect, useState } from 'react';
 import { Viewer, Entity } from 'resium';
-import { Cartesian3, Color, Ion } from 'cesium';
+import * as Cesium from 'cesium';
 import useStore from '../store/useStore';
-import '@cesium/widgets/Source/widgets.css';
+import 'cesium/Build/Cesium/Widgets/widgets.css';
+
+// Configure Cesium
+window.CESIUM_BASE_URL = '/cesium';
 
 // Configure Cesium access token
-Ion.defaultAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiI0YzE3ZjVmZi1hZmRjLTRhODItOWY3ZS1kZGRlZTYzYWU0MjgiLCJpZCI6MTg2MzE0LCJpYXQiOjE3MDI4OTgwMzl9.8U7h5AiuDjGz3vVvFSqO_HKHfU_SjKPkc_HRKjHNZxY';
+Cesium.Ion.defaultAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiI0YzE3ZjVmZi1hZmRjLTRhODItOWY3ZS1kZGRlZTYzYWU0MjgiLCJpZCI6MTg2MzE0LCJpYXQiOjE3MDI4OTgwMzl9.8U7h5AiuDjGz3vVvFSqO_HKHfU_SjKPkc_HRKjHNZxY';
 
 export default function Globe() {
   const { userLocation, satellites, selectedSatellite } = useStore();
@@ -16,7 +19,7 @@ export default function Globe() {
   useEffect(() => {
     if (viewer && userLocation) {
       viewer.camera.flyTo({
-        destination: Cartesian3.fromDegrees(
+        destination: Cesium.Cartesian3.fromDegrees(
           userLocation.lng,
           userLocation.lat,
           1000000.0
@@ -41,18 +44,18 @@ export default function Globe() {
     >
       {userLocation && (
         <Entity
-          position={Cartesian3.fromDegrees(
+          position={Cesium.Cartesian3.fromDegrees(
             userLocation.lng,
             userLocation.lat,
             0
           )}
-          point={{ pixelSize: 10, color: Color.YELLOW }}
+          point={{ pixelSize: 10, color: Cesium.Color.YELLOW }}
         />
       )}
       {satellites?.map((satellite) => (
         <Entity
           key={satellite.satid}
-          position={Cartesian3.fromDegrees(
+          position={Cesium.Cartesian3.fromDegrees(
             satellite.lng,
             satellite.lat,
             satellite.alt * 1000
@@ -60,8 +63,8 @@ export default function Globe() {
           point={{
             pixelSize: 8,
             color: selectedSatellite?.satid === satellite.satid
-              ? Color.RED
-              : Color.WHITE
+              ? Cesium.Color.RED
+              : Cesium.Color.WHITE
           }}
         />
       ))}

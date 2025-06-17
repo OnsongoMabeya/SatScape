@@ -11,6 +11,7 @@
   "dependencies": {
     "@cesium/engine": "^18.0.0",
     "@cesium/widgets": "^12.1.0",
+    "@craco/craco": "^7.1.0",
     "@emotion/cache": "^11.14.0",
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.0",

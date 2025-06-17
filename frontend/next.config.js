@@ -3,34 +3,48 @@ const path = require('path');
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  transpilePackages: ['@cesium/engine', '@cesium/widgets'],
   webpack: (config, { buildId, dev, isServer, defaultLoaders, webpack }) => {
-    config.plugins.push(
-      new CopyWebpackPlugin({
-        patterns: [
-          {
-            from: 'node_modules/@cesium/engine/Build/Workers',
-            to: 'static/cesium/Workers',
-          },
-          {
-            from: 'node_modules/@cesium/engine/Build/ThirdParty',
-            to: 'static/cesium/ThirdParty',
-          },
-          {
-            from: 'node_modules/@cesium/engine/Source/Assets',
-            to: 'static/cesium/Assets',
-          },
-          {
-            from: 'node_modules/@cesium/widgets/Source/widgets.css',
-            to: 'static/cesium/Widgets/widgets.css',
-          },
-          {
-            from: 'node_modules/@cesium/widgets/Source/Widgets',
-            to: 'static/cesium/Widgets',
-          },
-        ],
-      })
-    );
+    if (!isServer) {
+      config.plugins.push(
+        new CopyWebpackPlugin({
+          patterns: [
+            {
+              from: path.join(
+                path.dirname(require.resolve('cesium')),
+                'Build/Cesium/Workers'
+              ),
+              to: path.join('public', 'cesium', 'Workers'),
+            },
+            {
+              from: path.join(
+                path.dirname(require.resolve('cesium')),
+                'Build/Cesium/ThirdParty'
+              ),
+              to: path.join('public', 'cesium', 'ThirdParty'),
+            },
+            {
+              from: path.join(
+                path.dirname(require.resolve('cesium')),
+                'Build/Cesium/Assets'
+              ),
+              to: path.join('public', 'cesium', 'Assets'),
+            },
+            {
+              from: path.join(
+                path.dirname(require.resolve('cesium')),
+                'Build/Cesium/Widgets'
+              ),
+              to: path.join('public', 'cesium', 'Widgets'),
+            },
+          ],
+        })
+      );
+
+      config.resolve.alias = {
+        ...config.resolve.alias,
+        cesium: path.resolve(__dirname, 'node_modules/cesium'),
+      };
+    }
 
     config.resolve = config.resolve || {};
     config.resolve.fallback = {
