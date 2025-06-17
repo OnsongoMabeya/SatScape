@@ -37,7 +37,7 @@ const useStore = create((set) => ({
       }
 
       const data = await response.json();
-      set({ satellites: data.above });
+      set({ satellites: data.above || [] });
     } catch (error) {
       set({ error: error.message });
     }

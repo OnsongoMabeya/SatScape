@@ -1,7 +1,8 @@
 'use client';
 
 import { useEffect } from 'react';
-import { Box, Container, Grid, Paper } from '@mui/material';
+import { Box, Container, Paper } from '@mui/material';
+import Grid from '@mui/material/Unstable_Grid2';
 import Globe from '../components/Globe';
 import LocationInput from '../components/LocationInput';
 import SatelliteSearch from '../components/SatelliteSearch';
@@ -26,7 +27,7 @@ export default function HomeContent() {
   return (
     <Container maxWidth="xl" sx={{ height: '100vh', py: 2 }}>
       <Grid container spacing={2} sx={{ height: '100%' }}>
-        <Grid item xs={12} md={8}>
+        <Grid xs={12} md={8}>
           <Paper 
             elevation={3} 
             sx={{ 
@@ -38,16 +39,16 @@ export default function HomeContent() {
             <Globe />
           </Paper>
         </Grid>
-        <Grid item xs={12} md={4}>
+        <Grid xs={12} md={4}>
           <Grid container spacing={2}>
-            <Grid item xs={12}>
+            <Grid xs={12}>
               <LocationInput />
             </Grid>
-            <Grid item xs={12}>
+            <Grid xs={12}>
               <SatelliteSearch />
             </Grid>
             {selectedSatellite && (
-              <Grid item xs={12}>
+              <Grid xs={12}>
                 <SatelliteInfo />
               </Grid>
             )}

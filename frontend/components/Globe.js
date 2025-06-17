@@ -2,8 +2,11 @@
 
 import { useEffect, useState } from 'react';
 import { Viewer, Entity } from 'resium';
-import { Cartesian3, Color } from 'cesium';
+import { Cartesian3, Color, buildModuleUrl } from 'cesium';
 import useStore from '../store/useStore';
+
+// Configure Cesium to load assets from the correct path
+buildModuleUrl.setBaseUrl('/static/cesium/');
 
 export default function Globe() {
   const { userLocation, satellites, selectedSatellite } = useStore();
