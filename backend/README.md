@@ -98,7 +98,7 @@ npm install
 npm run dev
 ```
 
-3 Server will be available at ```http://localhost:3001```
+3 Server will be available at `http://localhost:3001`
 
 ## Error Handling
 
