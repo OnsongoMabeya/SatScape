@@ -1,53 +1,122 @@
 # SatScape Frontend
 
-The frontend application for SatScape, built with Next.js and CesiumJS.
+The frontend application for SatScape, built with Next.js 13+ and CesiumJS/Resium.
+
+## Tech Stack
+
+- Next.js 13+ with App Router
+- CesiumJS/Resium for 3D globe visualization
+- Material-UI v5 for UI components
+- Zustand for state management
 
 ## Directory Structure
 
 ```bash
 frontend/
-├── src/
-│   ├── components/           # React components
-│   │   ├── Globe.js         # 3D globe visualization
-│   │   ├── LocationInput.js # User location handling
-│   │   ├── SatelliteInfo.js # Satellite details display
-│   │   ├── SatelliteSearch.js # Search functionality
-│   │   └── ErrorNotification.js # Error handling
-│   ├── store/
-│   │   └── useStore.js      # Zustand state management
-│   ├── utils/
-│   │   └── api.js          # API client utilities
-│   ├── layout.js           # Root layout component
-│   └── page.js            # Main application page
-├── public/                # Static assets
-└── [config files]        # Various configuration files
+├── app/                     # Next.js 13+ app directory
+│   ├── layout.js            # Root layout with providers
+│   ├── page.js              # Main application page
+│   └── HomeContent.js       # Main content component
+├── components/              # React components
+│   ├── Globe.js             # 3D globe visualization
+│   ├── LocationInput.js     # User location handling
+│   ├── SatelliteInfo.js     # Satellite details
+│   ├── SatelliteSearch.js   # Search functionality
+│   └── ErrorNotification.js # Error handling
+├── store/
+│   └── useStore.js          # Zustand state management
+├── public/                  # Static assets
+│   └── cesium/              # Cesium static files
+└── next.config.js           # Next.js configuration
 ```
 
 ## Components
 
-### Globe.js
+## Setup
 
-- Renders the 3D globe using CesiumJS/Resium
-- Displays user location marker
-- Shows satellite positions and orbit trails
-- Handles camera movements and animations
+1 Install dependencies:
 
-### LocationInput.js
+```bash
+npm install
+```
 
-- Manages user location detection
-- Provides manual location input form
-- Handles geolocation errors and fallbacks
+2 Configure environment:
 
-### SatelliteInfo.js
+```bash
+# Copy environment file
+cp .env.example .env
 
-- Displays detailed satellite information
-- Shows position, altitude, azimuth, etc.
-- Updates in real-time
+# Set API URL
+echo "NEXT_PUBLIC_API_URL=http://localhost:5000" >> .env
+```
 
-### SatelliteSearch.js
+3 Start development server:
 
-- Implements satellite search functionality
-- Filters satellites by name or NORAD ID
+```bash
+npm run dev
+```
+
+The app will be available at `http://localhost:3000`
+
+## Key Components
+
+### Globe (`components/Globe.js`)
+
+- 3D globe visualization using CesiumJS/Resium
+- Real-time satellite position tracking
+- Orbit trail visualization
+- Interactive camera controls
+
+### Location Input (`components/LocationInput.js`)
+
+- Automatic geolocation detection
+- Manual location input
+- Coordinate validation
+
+### Satellite Info (`components/SatelliteInfo.js`)
+
+- Real-time position updates
+- TLE data display
+- Orbital parameters
+
+### Satellite Search (`components/SatelliteSearch.js`)
+
+- Search by name or NORAD ID
+- Results filtering
+- Selection handling
+
+## State Management
+
+The application uses Zustand for state management (`store/useStore.js`):
+
+- User location state
+- Selected satellite data
+- API integration
+- Error handling
+
+## Build
+
+To build for production:
+
+```bash
+npm run build
+```
+
+This will:
+
+1. Copy Cesium assets to public directory
+2. Generate optimized production build
+3. Output to `.next` directory
+
+## Environment Variables
+
+- `NEXT_PUBLIC_API_URL`: Backend API URL (required)
+
+## Notes
+
+- Cesium assets are automatically copied during build
+- The app requires a running backend API
+- Development server includes hot reloading
 - Provides autocomplete suggestions
 
 ### ErrorNotification.js
@@ -55,7 +124,7 @@ frontend/
 - Handles error display and notifications
 - Provides user feedback for various operations
 
-## State Management
+## State Managementt
 
 Uses Zustand for state management with the following stores:
 
@@ -75,7 +144,7 @@ The `api.js` utility provides methods for:
 - Retrieving TLE data
 - Error handling and response processing
 
-## Environment Variables
+## Environment Variabless
 
 Create a `.env.local` file with:
 

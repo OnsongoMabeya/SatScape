@@ -1,6 +1,13 @@
 # SatScape Backend
 
-The backend server for SatScape, providing API endpoints and caching for satellite data.
+Express.js backend server for SatScape, providing satellite tracking data through N2YO API integration.
+
+## Tech Stack
+
+- Express.js for API server
+- Node-Cache for response caching
+- Winston for structured logging
+- N2YO API for satellite data
 
 ## Directory Structure
 
@@ -8,46 +15,145 @@ The backend server for SatScape, providing API endpoints and caching for satelli
 backend/
 ├── src/
 │   ├── routes/
-│   │   └── satellites.js    # API route handlers
+│   │   ├── satellites.js  # Satellite endpoints
+│   │   └── health.js      # Health check endpoints
 │   ├── services/
-│   │   └── satelliteService.js  # Business logic
+│   │   └── satelliteService.js  # Satellite data handling
 │   ├── utils/
-│   │   └── api.js          # N2YO API client
-│   └── index.js            # Server entry point
-└── [config files]          # Configuration files
+│   │   ├── api.js         # N2YO API client
+│   │   ├── logger.js      # Winston logger setup
+│   │   └── healthCheck.js # Health monitoring
+│   └── index.js           # Server entry point
+└── .env                   # Environment configuration
 ```
 
-## Health Monitoring
+## Setup
 
-### Health Check Endpoints
+1 Install dependencies:
 
-#### GET /api/health
+```bash
+npm install
+```
 
-- Returns current health status of the system
-- Includes uptime and memory usage
-- No authentication required
+2 Configure environment:
 
-#### GET /api/health/check
+```bash
+# Copy environment file
+cp .env.example .env
 
-- Performs a live check of N2YO API connectivity
-- Returns detailed status including any errors
-- Response codes:
-  - 200: All systems healthy
-  - 503: N2YO API unavailable
-  - 500: Internal server error
+# Add your N2YO API key
+echo "N2YO_API_KEY=your-api-key" >> .env
+```
 
-### Logging System
+3 Start development server:
 
-Logs are stored in the `logs` directory:
+```bash
+npm run dev
+```
 
-- `combined.log`: All logs
-- `error.log`: Error logs only
-- `health.log`: Health check logs
+The server will be available at `http://localhost:5000`
 
-Log information includes:
+## API Endpoints
 
-- Timestamp
-- Log level
+### Satellites
+
+#### GET /satellites/above
+
+Get satellites visible from a location.
+
+```bash
+GET /satellites/above?lat=<latitude>&lng=<longitude>&alt=<altitude>
+```
+
+#### GET /satellites/positions/:id
+
+Get satellite positions over time.
+
+```bash
+GET /satellites/positions/:id?lat=<latitude>&lng=<longitude>&alt=<altitude>&seconds=<duration>
+```
+
+#### GET /satellites/tle/:id
+
+Get satellite TLE data.
+
+```bash
+GET /satellites/tle/:id
+```
+
+### Health
+
+#### GET /health
+
+Check API health status.
+
+```bash
+GET /health
+```
+
+Response:
+
+```json
+{
+  "status": "healthy",
+  "n2yo": true,
+  "uptime": 123456
+}
+```
+
+## Caching
+
+The server implements caching for:
+
+- Satellite positions (5 seconds TTL)
+- TLE data (5 minutes TTL)
+- Health check results (10 seconds TTL)
+
+## Logging
+
+Structured logging using Winston:
+
+- Log levels: error, warn, info, debug
+- JSON format for machine parsing
+- Console output in development
+- File output in production
+
+## Error Handling
+
+- Standard error responses
+- N2YO API error handling
+- Rate limit monitoring
+- Automatic retry for transient failures
+
+## Environment Variables
+
+- `PORT`: Server port (default: 5000)
+- `NODE_ENV`: Environment (development/production)
+- `N2YO_API_KEY`: N2YO API key (required)
+- `N2YO_BASE_URL`: N2YO API base URL
+
+## Development
+
+- Nodemon for auto-restart
+- ESLint for code quality
+- Pretty error logging
+- API response validation
+
+## Production
+
+To run in production:
+
+```bash
+npm run build
+npm start
+```
+
+Consider using PM2 or similar for process management:
+
+```bash
+pm2 start npm -- start
+```
+
 - Request details (method, path, query)
 - Error details when applicable
 - Health check results
@@ -60,7 +166,7 @@ Log information includes:
 - Request logging for all API endpoints
 - Error tracking with stack traces
 
-## API Endpoints
+## API Endpointss
 
 ### GET /api/satellites/above
 
@@ -111,7 +217,7 @@ Implements caching to respect N2YO API rate limits:
 - /positions: 1000 requests/hour
 - /tle: 1000 requests/hour
 
-## Environment Variables
+## Environment Variabless
 
 Create a `.env` file with:
 
@@ -127,7 +233,7 @@ N2YO_BASE_URL=https://api.n2yo.com/rest/v1/satellite
 - `npm run dev` - Start development server with nodemon
 - `npm start` - Start production server
 
-## Development
+## Developmentt
 
 1 Install dependencies:
 
@@ -143,7 +249,7 @@ npm run dev
 
 3 Server will be available at `http://localhost:5000`
 
-## Error Handling
+## Error Handlingg
 
 - Input validation for all endpoints
 - Proper error responses with status codes

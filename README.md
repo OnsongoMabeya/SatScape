@@ -1,32 +1,59 @@
 # SatScape 🛰️
 
-A real-time satellite tracking application that visualizes satellites currently overhead using a 3D globe interface.
+A real-time satellite tracking application that visualizes satellites currently overhead using a 3D globe interface. Built with Next.js 13+, Express.js, and CesiumJS.
 
 ## Features
 
-- 🌍 Real-time 3D globe visualization using CesiumJS
+- 🌍 Real-time 3D globe visualization using CesiumJS/Resium
 - 📍 Automatic user location detection
-- 🛰️ Live satellite position tracking
+- 🛰️ Live satellite position tracking with TLE data
 - 🔍 Satellite search functionality
 - 📊 Detailed satellite information display
 - 🌠 Orbit trail visualization
+- ⚡ Server-side caching for improved performance
+- 🎨 Modern UI with Material-UI v5
+- 🔄 Real-time state management with Zustand
+
+## Tech Stack
+
+### Frontend
+
+- Next.js 13+ (App Router)
+- CesiumJS/Resium for 3D globe
+- Material-UI v5 for UI components
+- Zustand for state management
+
+### Backend
+
+- Express.js
+- Node-Cache for API response caching
+- Winston for logging
+- N2YO API integration
 
 ## Project Structure
 
 ```bash
 /
-├── frontend/          # Next.js frontend application
-├── backend/          # Express.js backend server
-└── package.json      # Root level dependencies and scripts
+├── frontend/           # Next.js frontend application
+│   ├── app/            # Next.js 13+ app directory
+│   ├── components/     # React components
+│   ├── store/          # Zustand state management
+│   └── public/         # Static assets including Cesium
+├── backend/            # Express.js backend server
+│   ├── src/
+│   │   ├── routes/     # API routes
+│   │   ├── services/   # Business logic
+│   │   └── utils/      # Shared utilities
+└── package.json        # Root level dependencies and scripts
 ```
 
 ## Prerequisites
 
-- Node.js (v14 or higher)
-- npm (v6 or higher)
+- Node.js (v18 or higher)
+- npm (v9 or higher)
 - N2YO API key (get it from [N2YO website](https://www.n2yo.com/api/))
 
-## Quick Start
+## Setup
 
 1 Clone the repository:
 
@@ -35,27 +62,73 @@ git clone git@github.com:OnsongoMabeya/SatScape.git
 cd SatScape
 ```
 
-2 Install dependencies for both frontend and backend:
+2 Install dependencies:
 
 ```bash
 npm run install:all
 ```
 
-3 Set up environment variables:
+3 Configure environment:
 
-- Copy `.env.example` to `.env` in both frontend and backend directories
-- Add your N2YO API key to `backend/.env`
+```bash
+# Copy environment files
+cp frontend/.env.example frontend/.env
+cp backend/.env.example backend/.env
 
-4 Start both frontend and backend:
+# Add your N2YO API key to backend/.env
+# Set frontend API URL
+echo "NEXT_PUBLIC_API_URL=http://localhost:5000" >> frontend/.env
+```
+
+4 Start development servers:
 
 ```bash
 npm run dev
 ```
 
-The application will be available at:
+## Usage
+
+Once running, access:
 
 - Frontend: `http://localhost:3000`
 - Backend API: `http://localhost:5000`
+
+## API Reference
+
+- `GET /satellites/above` - Get satellites above current location
+- `GET /satellites/positions/:id` - Get satellite positions
+- `GET /satellites/tle/:id` - Get satellite TLE data
+- `GET /health` - API health check
+
+## Development
+
+- Frontend hot reloading is enabled
+- Backend uses nodemon for auto-restart
+- Cesium assets are automatically copied during build
+
+## Deployment
+
+Build for production:
+
+```bash
+# Build frontend
+cd frontend && npm run build
+
+# Build backend
+cd backend && npm run build
+```
+
+## Contributing
+
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add some amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ## Available Scripts
 
@@ -75,7 +148,7 @@ The N2YO API has the following rate limits:
 - `/positions` endpoint: 1000 requests/hour
 - `/tle` endpoint: 1000 requests/hour
 
-## Tech Stack
+## Tech Stackk
 
 - Frontend:
   - Next.js
@@ -88,7 +161,7 @@ The N2YO API has the following rate limits:
   - Node-Cache (Caching)
   - CORS
 
-## Contributing
+## Contributingg
 
 1. Fork the repository
 2. Create your feature branch (`git checkout -b feature/amazing-feature`)
