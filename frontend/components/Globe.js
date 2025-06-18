@@ -9,8 +9,12 @@ import 'cesium/Build/Cesium/Widgets/widgets.css';
 // Configure Cesium
 window.CESIUM_BASE_URL = '/cesium';
 
-// Configure Cesium access token
-Cesium.Ion.defaultAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiJlYWE1OWUxNy1mMWZiLTQzYjYtYTQ0OS1kMWFjYmFkNjc5YzQiLCJpZCI6MTg2MzE0LCJpYXQiOjE3MDI5MDY1NDF9.Jn3uN4WN9RLc5OMNzHIn9HYwk_K0YjGVwGv_Yb4n-KA';
+// Create Bing Maps imagery provider
+const imageryProvider = new Cesium.BingMapsImageryProvider({
+  url: 'https://dev.virtualearth.net',
+  key: 'AuYN8ifR-YgbPqwxQ-Y1F4YHmqpBEECvvmCW4u-kyhgHkx1FpRZ_MNOBwIuxoI7k',
+  mapStyle: Cesium.BingMapsStyle.AERIAL
+});
 
 export default function Globe() {
   const { userLocation, satellites, selectedSatellite } = useStore();
@@ -40,7 +44,12 @@ export default function Globe() {
       timeline={false}
       animation={false}
       baseLayerPicker={false}
-      imageryProvider={new Cesium.OpenStreetMapImageryProvider()}
+      navigationHelpButton={false}
+      sceneModePicker={false}
+      homeButton={false}
+      geocoder={false}
+      scene3DOnly={true}
+      imageryProvider={imageryProvider}
       onReady={handleReady}
     >
       {userLocation && (
