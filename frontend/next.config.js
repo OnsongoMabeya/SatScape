@@ -13,28 +13,28 @@ const nextConfig = {
                 path.dirname(require.resolve('cesium')),
                 'Build/Cesium/Workers'
               ),
-              to: path.join('public', 'cesium', 'Workers'),
+              to: 'public/cesium/Workers',
             },
             {
               from: path.join(
                 path.dirname(require.resolve('cesium')),
                 'Build/Cesium/ThirdParty'
               ),
-              to: path.join('public', 'cesium', 'ThirdParty'),
+              to: 'public/cesium/ThirdParty',
             },
             {
               from: path.join(
                 path.dirname(require.resolve('cesium')),
                 'Build/Cesium/Assets'
               ),
-              to: path.join('public', 'cesium', 'Assets'),
+              to: 'public/cesium/Assets',
             },
             {
               from: path.join(
                 path.dirname(require.resolve('cesium')),
                 'Build/Cesium/Widgets'
               ),
-              to: path.join('public', 'cesium', 'Widgets'),
+              to: 'public/cesium/Widgets',
             },
           ],
         })
