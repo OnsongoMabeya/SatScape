@@ -2,7 +2,7 @@
 
 import { useEffect } from 'react';
 import { Container, Paper, Typography } from '@mui/material';
-import Grid from '@mui/material/Unstable_Grid2';
+import Grid from '@mui/material/Grid';
 import Globe from '../components/Globe';
 import LocationInput from '../components/LocationInput';
 import SatelliteSearch from '../components/SatelliteSearch';
@@ -27,7 +27,7 @@ export default function HomeContent() {
   return (
     <Container maxWidth="xl" sx={{ height: '100vh', py: 2 }}>
       <Grid container spacing={2}>
-        <Grid xs={12} md={4}>
+        <Grid item xs={12} md={4}>
           <Paper
             elevation={3}
             sx={{
@@ -48,7 +48,7 @@ export default function HomeContent() {
             )}
           </Paper>
         </Grid>
-        <Grid xs={12} md={8}>
+        <Grid item xs={12} md={8}>
           <Paper
             elevation={3}
             sx={{
