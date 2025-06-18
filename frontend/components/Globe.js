@@ -9,10 +9,15 @@ import 'cesium/Build/Cesium/Widgets/widgets.css';
 // Configure Cesium
 window.CESIUM_BASE_URL = '/cesium';
 
+// Configure Cesium Ion token from environment variable
+if (process.env.NEXT_PUBLIC_CESIUM_ION_TOKEN) {
+  Cesium.Ion.defaultAccessToken = process.env.NEXT_PUBLIC_CESIUM_ION_TOKEN;
+}
+
 // Create Bing Maps imagery provider
 const imageryProvider = new Cesium.BingMapsImageryProvider({
   url: 'https://dev.virtualearth.net',
-  key: 'AuYN8ifR-YgbPqwxQ-Y1F4YHmqpBEECvvmCW4u-kyhgHkx1FpRZ_MNOBwIuxoI7k',
+  key: process.env.NEXT_PUBLIC_BING_MAPS_KEY || 'AuYN8ifR-YgbPqwxQ-Y1F4YHmqpBEECvvmCW4u-kyhgHkx1FpRZ_MNOBwIuxoI7k',
   mapStyle: Cesium.BingMapsStyle.AERIAL
 });
 
