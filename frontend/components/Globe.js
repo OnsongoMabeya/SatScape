@@ -10,7 +10,7 @@ import 'cesium/Build/Cesium/Widgets/widgets.css';
 window.CESIUM_BASE_URL = '/cesium';
 
 // Configure Cesium access token
-Cesium.Ion.defaultAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiI0YzE3ZjVmZi1hZmRjLTRhODItOWY3ZS1kZGRlZTYzYWU0MjgiLCJpZCI6MTg2MzE0LCJpYXQiOjE3MDI4OTgwMzl9.8U7h5AiuDjGz3vVvFSqO_HKHfU_SjKPkc_HRKjHNZxY';
+Cesium.Ion.defaultAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiJlYWE1OWUxNy1mMWZiLTQzYjYtYTQ0OS1kMWFjYmFkNjc5YzQiLCJpZCI6MTg2MzE0LCJpYXQiOjE3MDI5MDY1NDF9.Jn3uN4WN9RLc5OMNzHIn9HYwk_K0YjGVwGv_Yb4n-KA';
 
 export default function Globe() {
   const { userLocation, satellites, selectedSatellite } = useStore();
@@ -40,6 +40,7 @@ export default function Globe() {
       timeline={false}
       animation={false}
       baseLayerPicker={false}
+      imageryProvider={new Cesium.OpenStreetMapImageryProvider()}
       onReady={handleReady}
     >
       {userLocation && (

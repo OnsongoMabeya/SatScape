@@ -1,8 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
-import { Container, Paper, Typography } from '@mui/material';
-import Grid from '@mui/material/Grid';
+import { Container, Paper, Typography, Grid } from '@mui/material';
 import Globe from '../components/Globe';
 import LocationInput from '../components/LocationInput';
 import SatelliteSearch from '../components/SatelliteSearch';
@@ -27,7 +26,7 @@ export default function HomeContent() {
   return (
     <Container maxWidth="xl" sx={{ height: '100vh', py: 2 }}>
       <Grid container spacing={2}>
-        <Grid item xs={12} md={4}>
+        <Grid sx={{ width: { xs: '100%', md: '33.33%' } }}>
           <Paper
             elevation={3}
             sx={{
@@ -48,7 +47,7 @@ export default function HomeContent() {
             )}
           </Paper>
         </Grid>
-        <Grid item xs={12} md={8}>
+        <Grid sx={{ width: { xs: '100%', md: '66.67%' } }}>
           <Paper
             elevation={3}
             sx={{
