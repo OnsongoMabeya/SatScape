@@ -66,6 +66,8 @@ The app will be available at `http://localhost:3000`
 - Real-time satellite position tracking
 - Orbit trail visualization
 - Interactive camera controls
+- Bing Maps aerial imagery
+- Simplified UI controls (no timeline, animation, or base layer picker)
 
 ### Location Input (`components/LocationInput.js`)
 

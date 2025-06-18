@@ -4,7 +4,7 @@ A real-time satellite tracking application that visualizes satellites currently 
 
 ## Features
 
-- 🌍 Real-time 3D globe visualization using CesiumJS/Resium
+- 🌍 Real-time 3D globe visualization using CesiumJS/Resium with Bing Maps aerial imagery
 - 📍 Automatic user location detection
 - 🛰️ Live satellite position tracking with TLE data
 - 🔍 Satellite search functionality
@@ -13,6 +13,7 @@ A real-time satellite tracking application that visualizes satellites currently 
 - ⚡ Server-side caching for improved performance
 - 🎨 Modern UI with Material-UI v5
 - 🔄 Real-time state management with Zustand
+- 🎮 Simplified globe controls for better UX
 
 ## Tech Stack
 
