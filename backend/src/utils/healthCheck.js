@@ -1,4 +1,4 @@
-const axios = require('axios');
+const { fetchFromN2YO } = require('./api');
 const logger = require('./logger');
 
 class HealthCheck {
@@ -12,19 +12,17 @@ class HealthCheck {
 
     async checkN2YOApi() {
         try {
-            // Test N2YO API with a simple request
-            // Use ISS (NORAD ID: 25544) as test satellite
-            const response = await axios.get(`${process.env.N2YO_BASE_URL}/positions/25544/41.702/-76.014/0/1?apiKey=${process.env.N2YO_API_KEY}`);
+            // Test N2YO API with a simple request using ISS (NORAD ID: 25544)
+            const data = await fetchFromN2YO('/positions/25544/41.702/-76.014/0/1');
             
-            const isHealthy = response.status === 200 && response.data;
+            const isHealthy = !!data;
             this.status.n2yo = isHealthy;
             this.status.lastCheck = new Date();
             this.status.errors = [];
 
             logger.info('N2YO API Health Check', {
                 healthy: isHealthy,
-                timestamp: this.status.lastCheck,
-                responseTime: response.duration
+                timestamp: this.status.lastCheck
             });
 
             return isHealthy;
