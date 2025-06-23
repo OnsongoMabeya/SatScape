@@ -14,11 +14,10 @@ if (process.env.NEXT_PUBLIC_CESIUM_ION_TOKEN) {
   Cesium.Ion.defaultAccessToken = process.env.NEXT_PUBLIC_CESIUM_ION_TOKEN;
 }
 
-// Create Bing Maps imagery provider
-const imageryProvider = new Cesium.BingMapsImageryProvider({
-  url: 'https://dev.virtualearth.net',
-  key: process.env.NEXT_PUBLIC_BING_MAPS_KEY || 'AuYN8ifR-YgbPqwxQ-Y1F4YHmqpBEECvvmCW4u-kyhgHkx1FpRZ_MNOBwIuxoI7k',
-  mapStyle: Cesium.BingMapsStyle.AERIAL
+// Create OpenStreetMap imagery provider
+const imageryProvider = new Cesium.OpenStreetMapImageryProvider({
+  url: 'https://tile.openstreetmap.org/',
+  credit: '© OpenStreetMap contributors'
 });
 
 export default function Globe() {
