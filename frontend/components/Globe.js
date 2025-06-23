@@ -4,25 +4,31 @@ import { useEffect, useState } from 'react';
 import { Viewer, Entity } from 'resium';
 import * as Cesium from 'cesium';
 import useStore from '../store/useStore';
+import { useState, useEffect } from 'react';
 import 'cesium/Build/Cesium/Widgets/widgets.css';
 
 // Configure Cesium
 window.CESIUM_BASE_URL = '/cesium';
 
-// Configure Cesium Ion token from environment variable
-if (process.env.NEXT_PUBLIC_CESIUM_ION_TOKEN) {
-  Cesium.Ion.defaultAccessToken = process.env.NEXT_PUBLIC_CESIUM_ION_TOKEN;
-}
-
-// Create OpenStreetMap imagery provider
-const imageryProvider = new Cesium.OpenStreetMapImageryProvider({
-  url: 'https://tile.openstreetmap.org/',
-  credit: '© OpenStreetMap contributors'
-});
+// Configure Cesium Ion token
+Cesium.Ion.defaultAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiI0OWY4MmQyZi02ZjZhLTQyNDEtOGZhZC0wODQ4MTU3YjRmMzMiLCJpZCI6MTgzNDQzLCJpYXQiOjE3MDI5OTc1ODZ9.JBFHGqxQZjbf8oX2ZWqxlgwg5g7TF_AqWkv4vUgpYOk';
 
 export default function Globe() {
   const { userLocation, satellites, selectedSatellite } = useStore();
   const [viewer, setViewer] = useState(null);
+
+  useEffect(() => {
+    if (viewer) {
+      // Enable lighting based on sun/moon positions
+      viewer.scene.globe.enableLighting = true;
+      
+      // Disable fog
+      viewer.scene.fog.enabled = false;
+      
+      // Enable depth testing
+      viewer.scene.globe.depthTestAgainstTerrain = true;
+    }
+  }, [viewer]);
 
   useEffect(() => {
     if (viewer && userLocation) {
@@ -45,16 +51,19 @@ export default function Globe() {
   return (
     <Viewer
       full
+      ref={(e) => {
+        if (e?.cesiumElement) {
+          setViewer(e.cesiumElement);
+        }
+      }}
       timeline={false}
       animation={false}
-      baseLayerPicker={false}
+      baseLayerPicker={true}
       navigationHelpButton={false}
       sceneModePicker={false}
       homeButton={false}
       geocoder={false}
       scene3DOnly={true}
-      imageryProvider={imageryProvider}
-      onReady={handleReady}
     >
       {userLocation && (
         <Entity
