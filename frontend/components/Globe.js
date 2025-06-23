@@ -4,14 +4,16 @@ import { useEffect, useState } from 'react';
 import { Viewer, Entity } from 'resium';
 import * as Cesium from 'cesium';
 import useStore from '../store/useStore';
-import { useState, useEffect } from 'react';
 import 'cesium/Build/Cesium/Widgets/widgets.css';
 
 // Configure Cesium
 window.CESIUM_BASE_URL = '/cesium';
 
-// Configure Cesium Ion token
-Cesium.Ion.defaultAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiI0OWY4MmQyZi02ZjZhLTQyNDEtOGZhZC0wODQ4MTU3YjRmMzMiLCJpZCI6MTgzNDQzLCJpYXQiOjE3MDI5OTc1ODZ9.JBFHGqxQZjbf8oX2ZWqxlgwg5g7TF_AqWkv4vUgpYOk';
+// Configure Cesium Ion token from environment variable
+if (!process.env.NEXT_PUBLIC_CESIUM_ION_TOKEN) {
+  console.warn('Cesium Ion token not found in environment variables');
+}
+Cesium.Ion.defaultAccessToken = process.env.NEXT_PUBLIC_CESIUM_ION_TOKEN;
 
 export default function Globe() {
   const { userLocation, satellites, selectedSatellite } = useStore();
