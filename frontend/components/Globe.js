@@ -20,18 +20,84 @@ export default function Globe() {
   const [viewer, setViewer] = useState(null);
 
   useEffect(() => {
-    if (viewer) {
-      // Enable lighting based on sun/moon positions
-      viewer.scene.globe.enableLighting = true;
-      
-      // Disable fog
-      viewer.scene.fog.enabled = false;
-      
-      // Enable depth testing
-      viewer.scene.globe.depthTestAgainstTerrain = true;
-    }
+    if (!viewer) return;
+
+    // Enable lighting and configure globe
+    viewer.scene.globe.enableLighting = true;
+    viewer.scene.fog.enabled = false;
+    viewer.scene.globe.showGroundAtmosphere = true;
+    viewer.scene.globe.depthTestAgainstTerrain = true;
+
+    // Set initial camera position
+    viewer.camera.setView({
+      destination: Cesium.Cartesian3.fromDegrees(0, 0, 20000000)
+    });
+
+    // Enable smooth camera animations
+    viewer.scene.tweening = true;
   }, [viewer]);
 
+  // Update satellite positions every second
+  useEffect(() => {
+    if (!viewer || !satellites) return;
+
+    const interval = setInterval(() => {
+      satellites.forEach(sat => {
+        // Convert TLE to Cesium position
+        const time = Cesium.JulianDate.fromDate(new Date());
+        const position = Cesium.Cartesian3.fromDegrees(
+          sat.longitude,
+          sat.latitude,
+          sat.altitude * 1000 // Convert to meters
+        );
+
+        // Update entity position
+        if (viewer.entities.getById(sat.satid)) {
+          viewer.entities.getById(sat.satid).position = new Cesium.ConstantPositionProperty(position);
+        } else {
+          // Create new satellite entity
+          viewer.entities.add({
+            id: sat.satid,
+            position: position,
+            point: {
+              pixelSize: 10,
+              color: selectedSatellite?.satid === sat.satid 
+                ? Cesium.Color.YELLOW 
+                : Cesium.Color.CYAN,
+              outlineColor: Cesium.Color.WHITE,
+              outlineWidth: 2
+            },
+            label: {
+              text: sat.satname,
+              font: '12px Roboto',
+              style: Cesium.LabelStyle.FILL_AND_OUTLINE,
+              outlineWidth: 2,
+              verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
+              pixelOffset: new Cesium.Cartesian2(0, -10),
+              distanceDisplayCondition: new Cesium.DistanceDisplayCondition(0, 5000000)
+            },
+            path: {
+              resolution: 1,
+              material: new Cesium.PolylineGlowMaterialProperty({
+                glowPower: 0.2,
+                color: selectedSatellite?.satid === sat.satid 
+                  ? Cesium.Color.YELLOW 
+                  : Cesium.Color.CYAN
+              }),
+              width: 2
+            }
+          });
+        }
+      });
+    }, 1000);
+
+    return () => {
+      clearInterval(interval);
+      if (viewer) {
+        viewer.entities.removeAll();
+      }
+    };
+  }, [viewer, satellites, selectedSatellite]);
   useEffect(() => {
     if (viewer && userLocation) {
       viewer.camera.flyTo({
