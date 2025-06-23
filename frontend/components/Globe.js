@@ -19,9 +19,12 @@ export default function Globe() {
   const { userLocation, satellites, satellitePositions, selectedSatellite } = useStore();
   const [viewer, setViewer] = useState(null);
 
+  // Initialize viewer settings
   useEffect(() => {
     if (!viewer) return;
 
+    console.log('Initializing viewer settings');
+    
     // Enable lighting and configure globe
     viewer.scene.globe.enableLighting = true;
     viewer.scene.fog.enabled = false;
@@ -37,75 +40,55 @@ export default function Globe() {
     viewer.scene.tweening = true;
   }, [viewer]);
 
-  // Update satellite positions every second
+  // Get user location and initialize satellites
   useEffect(() => {
-    if (!viewer || !satellites) return;
+    console.log('Getting user location...');
+    const defaultLocation = { lat: -1.2921, lng: 36.8219 }; // Nairobi as default
+
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          console.log('Got user position:', position.coords);
+          const location = {
+            lat: position.coords.latitude,
+            lng: position.coords.longitude
+          };
+          useStore.getState().setUserLocation(location);
+        },
+        (error) => {
+          console.error('Error getting location:', error);
+          console.log('Using default location (Nairobi)');
+          useStore.getState().setUserLocation(defaultLocation);
+        }
+      );
+    } else {
+      console.warn('Geolocation not supported');
+      console.log('Using default location (Nairobi)');
+      useStore.getState().setUserLocation(defaultLocation);
+    }
+  }, []);
+
+  // Update satellite positions every second
+  // Fetch satellite positions periodically
+  useEffect(() => {
+    if (!satellites?.length) return;
 
     console.log('Satellites data:', satellites); // Debug log
-    console.log('Satellite positions:', satellitePositions); // Debug log
 
+    // Initial fetch
+    satellites.forEach(sat => {
+      useStore.getState().fetchSatellitePositions(sat.satid);
+    });
+
+    // Update positions every 10 seconds
     const interval = setInterval(() => {
       satellites.forEach(sat => {
-        const satPosition = satellitePositions[sat.satid];
-        if (!satPosition) {
-          console.warn('No position data for satellite:', sat.satid);
-          return;
-        }
-
-        // Convert to Cesium position
-        const position = Cesium.Cartesian3.fromDegrees(
-          satPosition.satlongitude,
-          satPosition.satlatitude,
-          satPosition.sataltitude * 1000 // Convert to meters
-        );
-
-        // Update entity position
-        if (viewer.entities.getById(sat.satid)) {
-          viewer.entities.getById(sat.satid).position = new Cesium.ConstantPositionProperty(position);
-        } else {
-          // Create new satellite entity
-          viewer.entities.add({
-            id: sat.satid,
-            position: position,
-            point: {
-              pixelSize: 10,
-              color: selectedSatellite?.satid === sat.satid 
-                ? Cesium.Color.YELLOW 
-                : Cesium.Color.CYAN,
-              outlineColor: Cesium.Color.WHITE,
-              outlineWidth: 2
-            },
-            label: {
-              text: sat.satname,
-              font: '12px Roboto',
-              style: Cesium.LabelStyle.FILL_AND_OUTLINE,
-              outlineWidth: 2,
-              verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
-              pixelOffset: new Cesium.Cartesian2(0, -10),
-              distanceDisplayCondition: new Cesium.DistanceDisplayCondition(0, 5000000)
-            },
-            path: {
-              resolution: 1,
-              material: new Cesium.PolylineGlowMaterialProperty({
-                glowPower: 0.2,
-                color: selectedSatellite?.satid === sat.satid 
-                  ? Cesium.Color.YELLOW 
-                  : Cesium.Color.CYAN
-              }),
-              width: 2
-            }
-          });
-        }
+        useStore.getState().fetchSatellitePositions(sat.satid);
       });
-    }, 1000);
+    }, 10000);
 
-    return () => {
-      clearInterval(interval);
-      if (viewer) {
-        viewer.entities.removeAll();
-      }
-    };
-  }, [viewer, satellites, satellitePositions, selectedSatellite]);
+    return () => clearInterval(interval);
+  }, [satellites]);
   useEffect(() => {
     if (viewer && userLocation) {
       viewer.camera.flyTo({
@@ -151,22 +134,47 @@ export default function Globe() {
           point={{ pixelSize: 10, color: Cesium.Color.YELLOW }}
         />
       )}
-      {satellites?.map((satellite) => (
-        <Entity
-          key={satellite.satid}
-          position={Cesium.Cartesian3.fromDegrees(
-            satellite.lng,
-            satellite.lat,
-            satellite.alt * 1000
-          )}
-          point={{
-            pixelSize: 8,
-            color: selectedSatellite?.satid === satellite.satid
-              ? Cesium.Color.RED
-              : Cesium.Color.WHITE
-          }}
-        />
-      ))}
+      {satellites?.map((satellite) => {
+        const satPosition = satellitePositions[satellite.satid];
+        if (!satPosition) return null;
+        
+        return (
+          <Entity
+            key={satellite.satid}
+            position={Cesium.Cartesian3.fromDegrees(
+              satPosition.satlongitude,
+              satPosition.satlatitude,
+              satPosition.sataltitude * 1000
+            )}
+            point={{
+              pixelSize: 12,
+              color: selectedSatellite?.satid === satellite.satid
+                ? Cesium.Color.YELLOW
+                : Cesium.Color.CYAN,
+              outlineColor: Cesium.Color.WHITE,
+              outlineWidth: 2
+            }}
+            label={{
+              text: satellite.satname,
+              font: '12px Roboto',
+              style: Cesium.LabelStyle.FILL_AND_OUTLINE,
+              outlineWidth: 2,
+              verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
+              pixelOffset: new Cesium.Cartesian2(0, -10)
+            }}
+            path={{
+              resolution: 1,
+              material: new Cesium.PolylineGlowMaterialProperty({
+                glowPower: 0.2,
+                color: selectedSatellite?.satid === satellite.satid 
+                  ? Cesium.Color.YELLOW 
+                  : Cesium.Color.CYAN
+              }),
+              width: 2
+            }}
+          />
+        );
+      })}
     </Viewer>
   );
 }
