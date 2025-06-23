@@ -16,7 +16,7 @@ if (!process.env.NEXT_PUBLIC_CESIUM_ION_TOKEN) {
 Cesium.Ion.defaultAccessToken = process.env.NEXT_PUBLIC_CESIUM_ION_TOKEN;
 
 export default function Globe() {
-  const { userLocation, satellites, selectedSatellite } = useStore();
+  const { userLocation, satellites, satellitePositions, selectedSatellite } = useStore();
   const [viewer, setViewer] = useState(null);
 
   useEffect(() => {
@@ -41,14 +41,22 @@ export default function Globe() {
   useEffect(() => {
     if (!viewer || !satellites) return;
 
+    console.log('Satellites data:', satellites); // Debug log
+    console.log('Satellite positions:', satellitePositions); // Debug log
+
     const interval = setInterval(() => {
       satellites.forEach(sat => {
-        // Convert TLE to Cesium position
-        const time = Cesium.JulianDate.fromDate(new Date());
+        const satPosition = satellitePositions[sat.satid];
+        if (!satPosition) {
+          console.warn('No position data for satellite:', sat.satid);
+          return;
+        }
+
+        // Convert to Cesium position
         const position = Cesium.Cartesian3.fromDegrees(
-          sat.longitude,
-          sat.latitude,
-          sat.altitude * 1000 // Convert to meters
+          satPosition.satlongitude,
+          satPosition.satlatitude,
+          satPosition.sataltitude * 1000 // Convert to meters
         );
 
         // Update entity position
@@ -97,7 +105,7 @@ export default function Globe() {
         viewer.entities.removeAll();
       }
     };
-  }, [viewer, satellites, selectedSatellite]);
+  }, [viewer, satellites, satellitePositions, selectedSatellite]);
   useEffect(() => {
     if (viewer && userLocation) {
       viewer.camera.flyTo({
@@ -128,10 +136,10 @@ export default function Globe() {
       animation={false}
       baseLayerPicker={true}
       navigationHelpButton={false}
-      sceneModePicker={false}
-      homeButton={false}
+      sceneModePicker={true}
+      homeButton={true}
       geocoder={false}
-      scene3DOnly={true}
+      scene3DOnly={false}
     >
       {userLocation && (
         <Entity

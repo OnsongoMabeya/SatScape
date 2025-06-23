@@ -9,8 +9,15 @@ const useStore = create((set) => ({
 
   // Satellites state
   satellites: [],
+  satellitePositions: {},
   selectedSatellite: null,
   setSelectedSatellite: (satellite) => set({ selectedSatellite: satellite }),
+  setSatellitePosition: (satId, position) => set(state => ({
+    satellitePositions: {
+      ...state.satellitePositions,
+      [satId]: position
+    }
+  })),
 
   // Error handling
   error: null,
@@ -38,6 +45,11 @@ const useStore = create((set) => ({
 
       const data = await response.json();
       set({ satellites: data.above || [] });
+      
+      // Fetch initial positions for all satellites
+      data.above?.forEach(sat => {
+        useStore.getState().fetchSatellitePositions(sat.satid);
+      });
     } catch (error) {
       set({ error: error.message });
     }
@@ -45,15 +57,26 @@ const useStore = create((set) => ({
 
   fetchSatellitePositions: async (satId) => {
     try {
-      const { userLocation } = useStore.getState();
-      if (!userLocation || !satId) return;
+      const posResponse = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/satellites/${satId}/positions`
+      );
+
+      if (!posResponse.ok) {
+        throw new Error('Failed to fetch satellite positions');
+      }
+
+      const posData = await posResponse.json();
+      if (posData.positions && posData.positions.length > 0) {
+        const position = posData.positions[0];
+        useStore.getState().setSatellitePosition(satId, position);
+      }
 
       const response = await fetch(
         `${process.env.NEXT_PUBLIC_API_URL}/satellites/positions?` +
         new URLSearchParams({
           satId,
-          lat: userLocation.lat,
-          lng: userLocation.lng,
+          lat: useStore.getState().userLocation.lat,
+          lng: useStore.getState().userLocation.lng,
           alt: 0,
           seconds: 2
         })
