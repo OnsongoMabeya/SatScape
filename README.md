@@ -4,7 +4,7 @@ A real-time satellite tracking application that visualizes satellites currently 
 
 ## Features
 
-- 🌍 Real-time 3D globe visualization using CesiumJS/Resium with Bing Maps aerial imagery
+- 🌍 Real-time 3D globe visualization using CesiumJS/Resium with OpenStreetMap
 - 📍 Automatic user location detection
 - 🛰️ Live satellite position tracking with TLE data
 - 🔍 Satellite search functionality

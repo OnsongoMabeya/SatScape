@@ -46,8 +46,9 @@ npm install
 # Copy environment file
 cp .env.example .env
 
-# Set API URL
+# Set API URL and Cesium Ion token
 echo "NEXT_PUBLIC_API_URL=http://localhost:5000" >> .env
+echo "NEXT_PUBLIC_CESIUM_ION_TOKEN=your-cesium-ion-token-here" >> .env
 ```
 
 3 Start development server:
@@ -66,7 +67,7 @@ The app will be available at `http://localhost:3000`
 - Real-time satellite position tracking
 - Orbit trail visualization
 - Interactive camera controls
-- Bing Maps aerial imagery
+- OpenStreetMap integration
 - Simplified UI controls (no timeline, animation, or base layer picker)
 
 ### Location Input (`components/LocationInput.js`)
