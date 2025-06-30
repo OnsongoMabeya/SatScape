@@ -15,15 +15,16 @@ const getSatellitesAbove = async (lat, lng, alt = 0, cat = 0) => {
   
   if (cached) return cached;
 
-  const data = await fetchFromN2YO(`/above/${lat}/${lng}/${alt}/${cat}/0`);
-  if (!data || data.error) {
-    throw new Error(data?.error || 'Failed to fetch satellite data');
+  // N2YO API expects category to be 0 for all satellites
+  const data = await fetchFromN2YO(`/above/${lat}/${lng}/${alt}/0/1`);
+  if (!data || !data.above) {
+    throw new Error('Failed to fetch satellite data');
   }
   cache.set(cacheKey, data);
   return data;
 };
 
-const getSatellitePositions = async (satId, lat, lng, alt = 0, seconds = 2) => {
+const getSatellitePositions = async (satId, lat = 0, lng = 0, alt = 0, seconds = 2) => {
   const cacheKey = `positions-${satId}-${lat}-${lng}-${alt}-${seconds}`;
   const cached = cache.get(cacheKey);
   

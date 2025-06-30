@@ -23,6 +23,7 @@ const useStore = create((set) => ({
       [satId]: position
     }
   })),
+  setSatellites: (satellites) => set({ satellites }),
 
   // Error handling
   error: null,
@@ -51,12 +52,16 @@ const useStore = create((set) => ({
       );
 
       if (!response.ok) {
-        throw new Error('Failed to fetch satellites');
+        const error = await response.json();
+        console.error('Error fetching satellites:', error);
+        return;
       }
 
       const data = await response.json();
       console.log('Received satellites:', data.above);
-      set({ satellites: data.above || [] });
+      if (data && data.above) {
+        set({ satellites: data.above });
+      }
       
       // Fetch initial positions for all satellites
       data.above?.forEach(sat => {
@@ -64,6 +69,7 @@ const useStore = create((set) => ({
         useStore.getState().fetchSatellitePositions(sat.satid);
       });
     } catch (error) {
+      console.error('Failed to fetch satellites:', error);
       set({ error: error.message });
     }
   },
@@ -102,6 +108,7 @@ const useStore = create((set) => ({
       }
       return data.positions;
     } catch (error) {
+      console.error('Failed to fetch satellite positions:', error);
       set({ error: error.message });
       return null;
     }
@@ -123,6 +130,7 @@ const useStore = create((set) => ({
       const data = await response.json();
       return data.tle;
     } catch (error) {
+      console.error('Failed to fetch satellite TLE:', error);
       set({ error: error.message });
       return null;
     }
