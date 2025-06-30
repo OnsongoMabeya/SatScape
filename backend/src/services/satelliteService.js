@@ -35,8 +35,12 @@ const getSatellitesAbove = async (lat, lng, alt = 0, cat = 0) => {
   
   if (cached) return cached;
 
-  // Always use parsedCat, which is guaranteed to be a valid non-negative integer
-  const endpoint = `/above/${parsedLat}/${parsedLng}/${parsedAlt}/${parsedCat}/1`;
+  // For the N2YO API, we need to handle the category parameter specially
+  // If category is 0 or not specified, we don't include it in the query
+  // This avoids the SQL syntax error from the N2YO API
+  const endpoint = parsedCat === 0 
+    ? `/above/${parsedLat}/${parsedLng}/${parsedAlt}/0/1` // No category filter
+    : `/above/${parsedLat}/${parsedLng}/${parsedAlt}/${parsedCat}/1`; // With category filter
   
   try {
     const data = await fetchFromN2YO(endpoint);
