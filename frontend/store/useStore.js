@@ -92,9 +92,13 @@ const useStore = create((set) => ({
       }
 
       const data = await response.json();
+      console.log('Satellite position response:', { satId, data });
       if (data.positions && data.positions.length > 0) {
         const position = data.positions[0];
+        console.log('Setting satellite position:', { satId, position });
         useStore.getState().setSatellitePosition(satId, position);
+      } else {
+        console.warn('No position data received for satellite:', satId);
       }
       return data.positions;
     } catch (error) {

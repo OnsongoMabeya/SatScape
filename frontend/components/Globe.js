@@ -135,8 +135,12 @@ export default function Globe() {
         />
       )}
       {satellites?.map((satellite) => {
+        console.log('Rendering satellite:', satellite.satid);
         const satPosition = satellitePositions[satellite.satid];
-        if (!satPosition) return null;
+        if (!satPosition) {
+          console.log('No position data for satellite:', satellite.satid);
+          return null;
+        }
         
         return (
           <Entity
