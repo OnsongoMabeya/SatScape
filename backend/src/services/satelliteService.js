@@ -10,21 +10,47 @@ const cache = new NodeCache({
 const TLE_CACHE_TTL = 300; // 5 minutes for TLE data
 
 const getSatellitesAbove = async (lat, lng, alt = 0, cat = 0) => {
-  const cacheKey = `above-${lat}-${lng}-${alt}-${cat}`;
+  // Parse and validate numeric parameters
+  const parsedLat = parseFloat(lat);
+  const parsedLng = parseFloat(lng);
+  const parsedAlt = parseFloat(alt);
+  const parsedCat = parseInt(cat, 10) || 0; // Default to 0 if NaN
+
+  // Validate coordinates
+  if (isNaN(parsedLat) || parsedLat < -90 || parsedLat > 90) {
+    throw new Error('Invalid latitude value');
+  }
+  if (isNaN(parsedLng) || parsedLng < -180 || parsedLng > 180) {
+    throw new Error('Invalid longitude value');
+  }
+  if (isNaN(parsedAlt) || parsedAlt < 0) {
+    throw new Error('Invalid altitude value');
+  }
+  if (parsedCat < 0) {
+    throw new Error('Invalid category value');
+  }
+
+  const cacheKey = `above-${parsedLat}-${parsedLng}-${parsedAlt}-${parsedCat}`;
   const cached = cache.get(cacheKey);
   
   if (cached) return cached;
 
-  // Construct endpoint based on whether category is specified
-  const endpoint = `/above/${lat}/${lng}/${alt}/${cat === null ? '0' : cat}/1`;
-  const data = await fetchFromN2YO(endpoint);
+  // Always use parsedCat, which is guaranteed to be a valid non-negative integer
+  const endpoint = `/above/${parsedLat}/${parsedLng}/${parsedAlt}/${parsedCat}/1`;
   
-  if (!data || !data.above) {
-    throw new Error('Failed to fetch satellite data');
+  try {
+    const data = await fetchFromN2YO(endpoint);
+    
+    if (!data || !data.above) {
+      throw new Error('Failed to fetch satellite data');
+    }
+    
+    cache.set(cacheKey, data);
+    return data;
+  } catch (error) {
+    // Add more context to the error
+    throw new Error(`Failed to fetch satellites above: ${error.message}`);
   }
-  
-  cache.set(cacheKey, data);
-  return data;
 };
 
 const getSatellitePositions = async (satId, lat = 0, lng = 0, alt = 0, seconds = 2) => {

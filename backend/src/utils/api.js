@@ -9,10 +9,19 @@ const fetchFromN2YO = async (endpoint) => {
     if (!API_KEY) {
       throw new Error('N2YO API key is not configured');
     }
+    
     const url = `${BASE_URL}${endpoint}?apiKey=${API_KEY}`;
+    logger.info('Making N2YO API request:', { url });
+    
     const response = await axios.get(url);
     
     if (response.status !== 200) {
+      logger.error('N2YO API HTTP error:', {
+        endpoint,
+        status: response.status,
+        statusText: response.statusText,
+        url: response.config?.url
+      });
       throw new Error(`N2YO API HTTP error: ${response.statusText}`);
     }
     
@@ -20,7 +29,8 @@ const fetchFromN2YO = async (endpoint) => {
       logger.error('N2YO API response error:', {
         endpoint,
         error: response.data.error,
-        url: response.config?.url
+        url: response.config?.url,
+        data: response.data
       });
       throw new Error(`N2YO API error: ${response.data.error}`);
     }
