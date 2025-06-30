@@ -15,7 +15,10 @@ const getSatellitesAbove = async (lat, lng, alt = 0, cat = 0) => {
   
   if (cached) return cached;
 
-  const data = await fetchFromN2YO(`/above/${lat}/${lng}/${alt}/${cat}`);
+  const data = await fetchFromN2YO(`/above/${lat}/${lng}/${alt}/${cat}/0`);
+  if (!data || data.error) {
+    throw new Error(data?.error || 'Failed to fetch satellite data');
+  }
   cache.set(cacheKey, data);
   return data;
 };
