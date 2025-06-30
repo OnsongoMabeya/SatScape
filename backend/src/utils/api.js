@@ -12,8 +12,17 @@ const fetchFromN2YO = async (endpoint) => {
     const url = `${BASE_URL}${endpoint}?apiKey=${API_KEY}`;
     const response = await axios.get(url);
     
-    if (response.status !== 200 || response.data.error) {
-      throw new Error(`N2YO API error: ${response.data.error || response.statusText}`);
+    if (response.status !== 200) {
+      throw new Error(`N2YO API HTTP error: ${response.statusText}`);
+    }
+    
+    if (response.data.error) {
+      logger.error('N2YO API response error:', {
+        endpoint,
+        error: response.data.error,
+        url: response.config?.url
+      });
+      throw new Error(`N2YO API error: ${response.data.error}`);
     }
 
     logger.info('N2YO API Response:', {

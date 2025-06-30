@@ -15,11 +15,14 @@ const getSatellitesAbove = async (lat, lng, alt = 0, cat = 0) => {
   
   if (cached) return cached;
 
-  // N2YO API expects category to be 0 for all satellites
-  const data = await fetchFromN2YO(`/above/${lat}/${lng}/${alt}/0/1`);
+  // Construct endpoint based on whether category is specified
+  const endpoint = `/above/${lat}/${lng}/${alt}/${cat === null ? '0' : cat}/1`;
+  const data = await fetchFromN2YO(endpoint);
+  
   if (!data || !data.above) {
     throw new Error('Failed to fetch satellite data');
   }
+  
   cache.set(cacheKey, data);
   return data;
 };
@@ -30,7 +33,9 @@ const getSatellitePositions = async (satId, lat = 0, lng = 0, alt = 0, seconds =
   
   if (cached) return cached;
 
-  const data = await fetchFromN2YO(`/positions/${satId}/${lat}/${lng}/${alt}/${seconds}`);
+  // Construct endpoint based on whether category is specified
+  const endpoint = `/positions/${satId}/${lat}/${lng}/${alt}/${seconds}`;
+  const data = await fetchFromN2YO(endpoint);
   cache.set(cacheKey, data);
   return data;
 };
