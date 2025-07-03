@@ -1,7 +1,8 @@
-const express = require('express');
+import express from 'express';
+import healthCheck from '../utils/healthCheck.mjs';
+import logger from '../utils/logger.mjs';
+
 const router = express.Router();
-const healthCheck = require('../utils/healthCheck');
-const logger = require('../utils/logger');
 
 // Health check endpoint
 router.get('/', async (req, res) => {
@@ -25,4 +26,4 @@ router.get('/check', async (req, res) => {
     }
 });
 
-module.exports = router;
+export default router;

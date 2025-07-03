@@ -1,10 +1,12 @@
-require('dotenv').config();
-const express = require('express');
-const cors = require('cors');
-const satelliteRoutes = require('./routes/satellites');
-const healthRoutes = require('./routes/health');
-const logger = require('./utils/logger');
-const healthCheck = require('./utils/healthCheck');
+import dotenv from 'dotenv';
+import express from 'express';
+import cors from 'cors';
+import satelliteRoutes from './routes/satellites.mjs';
+import healthRoutes from './routes/health.mjs';
+import logger from './utils/logger.mjs';
+import healthCheck from './utils/healthCheck.mjs';
+
+dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 5000;

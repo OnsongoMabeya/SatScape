@@ -1,5 +1,5 @@
-const express = require('express');
-const { getSatellitesAbove, getSatellitePositions, getSatelliteTLE } = require('../services/satelliteService');
+import express from 'express';
+import { getSatellitesAbove, getSatellitePositions, getSatelliteTLE } from '../services/satelliteService.mjs';
 
 const router = express.Router();
 
@@ -101,4 +101,4 @@ router.get('/tle', async (req, res, next) => {
   }
 });
 
-module.exports = router;
+export default router;

@@ -1,5 +1,5 @@
-const { fetchFromN2YO } = require('./api');
-const logger = require('./logger');
+import { fetchFromN2YO } from './api.mjs';
+import logger from './logger.mjs';
 
 class HealthCheck {
     constructor() {
@@ -54,4 +54,4 @@ class HealthCheck {
     }
 }
 
-module.exports = new HealthCheck();
+export default new HealthCheck();

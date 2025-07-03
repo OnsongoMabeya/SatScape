@@ -1,6 +1,8 @@
-require('dotenv').config();
-const axios = require('axios');
-const logger = require('./logger');
+import dotenv from 'dotenv';
+import axios from 'axios';
+import logger from './logger.js';
+
+dotenv.config();
 
 const BASE_URL = 'https://api.n2yo.com/rest/v1/satellite';
 const API_KEY = process.env.N2YO_API_KEY;
@@ -84,6 +86,4 @@ const fetchFromN2YO = async (endpoint) => {
   }
 };
 
-module.exports = {
-  fetchFromN2YO
-};
+export { fetchFromN2YO };
