@@ -14,7 +14,7 @@ const getSatellitesAbove = async (lat, lng, alt = 0, cat = 0) => {
   const parsedLat = parseFloat(lat);
   const parsedLng = parseFloat(lng);
   const parsedAlt = parseFloat(alt);
-  const parsedCat = parseInt(cat, 10) || 0; // Default to 0 if NaN
+  const parsedCat = parseInt(cat, 10) || 0;
 
   // Validate coordinates
   if (isNaN(parsedLat) || parsedLat < -90 || parsedLat > 90) {
@@ -26,27 +26,35 @@ const getSatellitesAbove = async (lat, lng, alt = 0, cat = 0) => {
   if (isNaN(parsedAlt) || parsedAlt < 0) {
     throw new Error('Invalid altitude value');
   }
-  if (parsedCat < 0) {
-    throw new Error('Invalid category value');
-  }
 
   const cacheKey = `above-${parsedLat}-${parsedLng}-${parsedAlt}-${parsedCat}`;
   const cached = cache.get(cacheKey);
   
   if (cached) return cached;
 
-  // For the N2YO API, we need to handle the category parameter specially
-  // If category is 0 or not specified, we don't include it in the query
-  // This avoids the SQL syntax error from the N2YO API
-  const endpoint = parsedCat === 0 
-    ? `/above/${parsedLat}/${parsedLng}/${parsedAlt}/0/1` // No category filter
-    : `/above/${parsedLat}/${parsedLng}/${parsedAlt}/${parsedCat}/1`; // With category filter
+  // N2YO API format: /above/{observer_lat}/{observer_lng}/{observer_alt}/{search_radius}/{category_id}
+  // Search radius of 45 degrees (90 degrees total view)
+  // Category 0 means all satellites
+  const searchRadius = 45;
+  const endpoint = `/above/${parsedLat}/${parsedLng}/${parsedAlt}/${searchRadius}/${parsedCat}`;
   
   try {
     const data = await fetchFromN2YO(endpoint);
     
     if (!data || !data.above) {
       throw new Error('Failed to fetch satellite data');
+    }
+
+    // If a specific category was requested, filter the results
+    if (cat) {
+      data = {
+        ...data,
+        above: data.above.filter(sat => {
+          // Here you would implement category filtering based on your needs
+          // For now, we'll return all satellites since the API doesn't support filtering
+          return true;
+        })
+      };
     }
     
     cache.set(cacheKey, data);

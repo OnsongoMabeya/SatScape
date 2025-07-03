@@ -6,21 +6,24 @@ const BASE_URL = 'https://api.n2yo.com/rest/v1/satellite';
 const API_KEY = process.env.N2YO_API_KEY;
 
 const sanitizeEndpoint = (endpoint) => {
-  // Remove any leading/trailing slashes
+  // Remove any leading/trailing slashes and normalize
   endpoint = endpoint.replace(/^\/+|\/+$/g, '');
   
   // Split the endpoint into parts
   const parts = endpoint.split('/');
   
-  // For /above endpoint with category, ensure proper format
+  // For /above endpoint, ensure proper format
   if (parts[0] === 'above') {
-    const [cmd, lat, lng, alt, cat, minCount] = parts;
-    // If category is 0 or missing, use 0/minCount format
-    if (!cat || cat === '0') {
-      return `/${cmd}/${lat}/${lng}/${alt}/0/${minCount || 1}`;
+    const [cmd, lat, lng, alt, radius, category] = parts;
+    // Validate all required parameters are present
+    if (!lat || !lng || !alt || !radius || !category) {
+      throw new Error('Missing required parameters for /above endpoint');
     }
-    // Otherwise use the category as provided
-    return `/${cmd}/${lat}/${lng}/${alt}/${cat}/${minCount || 1}`;
+    // Ensure all parameters are numeric
+    if ([lat, lng, alt, radius, category].some(param => isNaN(parseFloat(param)))) {
+      throw new Error('All parameters for /above endpoint must be numeric');
+    }
+    return `/${cmd}/${lat}/${lng}/${alt}/${radius}/${category}`;
   }
   
   // For other endpoints, just join with slashes
