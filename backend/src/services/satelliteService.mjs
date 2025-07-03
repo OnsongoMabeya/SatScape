@@ -2,15 +2,15 @@ import NodeCache from 'node-cache';
 import { fetchFromN2YO } from '../utils/api.mjs';
 import pLimit from 'p-limit';
 
-// Cache with TTL of 30 seconds for positions and 5 minutes for other data
-const positionsCache = new NodeCache({ stdTTL: 30 });
+// Cache with TTL of 2 minutes for positions and 5 minutes for other data
+const positionsCache = new NodeCache({ stdTTL: 120 }); // Increased from 30s to 120s
 const satelliteCache = new NodeCache({ stdTTL: 300 });
 
 // Limit to 30 requests per minute (N2YO's limit)
 const limit = pLimit(1); // Only 1 concurrent request
 const requestQueue = [];
 let lastRequestTime = 0;
-const MIN_REQUEST_INTERVAL = 2000; // 2 seconds between requests
+const MIN_REQUEST_INTERVAL = 3000; // 3 seconds between requests to avoid rate limits
 
 const TLE_CACHE_TTL = 300; // 5 minutes for TLE data
 

@@ -75,14 +75,35 @@ const fetchFromN2YO = async (endpoint) => {
     });
     return response.data;
   } catch (error) {
-    logger.error('Error fetching from N2YO:', {
-      error: error.message,
-      endpoint,
-      status: error.response?.status,
-      data: error.response?.data,
-      url: error.config?.url
-    });
-    throw error;
+    if (error.response) {
+      const errorMessage = error.response.data.error;
+      const isRateLimit = errorMessage && errorMessage.includes('exceeded the number of transactions');
+      
+      logger.error('N2YO API response error:', {
+        endpoint,
+        error: errorMessage,
+        isRateLimit
+      });
+
+      if (isRateLimit) {
+        // Return cached data if available when rate limited
+        return { info: { warning: 'Using cached data due to rate limit' } };
+      }
+
+      throw new Error(`N2YO API error: ${errorMessage}`);
+    } else if (error.request) {
+      logger.error('N2YO API request error:', {
+        endpoint,
+        error: error.message
+      });
+      throw new Error(`N2YO API request error: ${error.message}`);
+    } else {
+      logger.error('N2YO API error:', {
+        endpoint,
+        error: error.message
+      });
+      throw new Error(`Error setting up request: ${error.message}`);
+    }
   }
 };
 
