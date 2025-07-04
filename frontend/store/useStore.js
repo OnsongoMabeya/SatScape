@@ -58,12 +58,16 @@ const useStore = create((set) => ({
       }
 
       const data = await response.json();
-      console.log('Received satellites:', data.above);
-      if (data && data.above) {
-        set({ satellites: data.above });
-        // Fetch positions in batches
-        useStore.getState().fetchPositionsInBatches(data.above);
+      if (!data || !data.info || !data.above || !Array.isArray(data.above)) {
+        console.error('Invalid response format:', data);
+        throw new Error('Invalid response format from backend');
       }
+
+      console.log('Received satellites:', data);
+      useStore.getState().setSatellites(data.above);
+      
+      // Fetch positions in batches
+      useStore.getState().fetchPositionsInBatches(data.above);
     } catch (error) {
       console.error('Failed to fetch satellites:', error);
       set({ error: error.message });
@@ -101,8 +105,16 @@ const useStore = create((set) => ({
       }
 
       const data = await response.json();
-      if (data.positions && data.positions.length > 0) {
+      
+      if (!data || !data.info || !data.positions || !Array.isArray(data.positions)) {
+        console.error('Invalid positions response format:', data);
+        throw new Error('Invalid positions response format from backend');
+      }
+
+      if (data.positions.length > 0) {
         useStore.getState().setSatellitePosition(satId, data.positions[0]);
+      } else {
+        console.warn('No position data available for satellite:', satId);
       }
     } catch (error) {
       console.error('Failed to fetch satellite position:', error);

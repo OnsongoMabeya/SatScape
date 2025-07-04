@@ -54,23 +54,29 @@ const getSatellitesAbove = async (lat, lng, alt = 0, cat = 0) => {
     lastRequestTime = Date.now();
 
     try {
-      const data = await fetchFromN2YO(endpoint);
+      const response = await fetchFromN2YO(endpoint);
       
-      if (!data || !data.above) {
-        throw new Error('Failed to fetch satellite data');
+      // Ensure we have valid data
+      if (!response) {
+        throw new Error('Empty response from N2YO API');
+      }
+      
+      // N2YO API returns info and above fields
+      if (!response.info) {
+        console.error('Missing info in response:', response);
+        throw new Error('Missing info field in N2YO API response');
+      }
+      
+      if (!response.above || !Array.isArray(response.above)) {
+        console.error('Missing or invalid above field:', response);
+        throw new Error('Missing or invalid above field in N2YO API response');
       }
 
       // If a specific category was requested, filter the results
-      if (cat) {
-        data = {
-          ...data,
-          above: data.above.filter(sat => {
-            // Here you would implement category filtering based on your needs
-            // For now, we'll return all satellites since the API doesn't support filtering
-            return true;
-          })
-        };
-      }
+      const data = {
+        info: response.info,
+        above: cat ? response.above.filter(sat => sat.satid) : response.above
+      };
       
       satelliteCache.set(cacheKey, data);
       return data;
@@ -106,11 +112,28 @@ const getSatellitePositions = async (satId, lat, lng, alt = 0, seconds = 2) => {
     lastRequestTime = Date.now();
 
     try {
-      const data = await fetchFromN2YO(endpoint);
+      const response = await fetchFromN2YO(endpoint);
       
-      if (!data || !data.positions) {
-        throw new Error('Failed to fetch satellite positions');
+      // Ensure we have valid data
+      if (!response) {
+        throw new Error('Empty response from N2YO API');
       }
+      
+      // N2YO API returns info and positions fields
+      if (!response.info) {
+        console.error('Missing info in positions response:', response);
+        throw new Error('Missing info field in N2YO API response');
+      }
+      
+      if (!response.positions || !Array.isArray(response.positions)) {
+        console.error('Missing or invalid positions field:', response);
+        throw new Error('Missing or invalid positions field in N2YO API response');
+      }
+      
+      const data = {
+        info: response.info,
+        positions: response.positions
+      };
       
       positionsCache.set(cacheKey, data);
       return data;

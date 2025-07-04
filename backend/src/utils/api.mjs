@@ -4,8 +4,13 @@ import logger from './logger.mjs';
 
 dotenv.config();
 
-const BASE_URL = 'https://api.n2yo.com/rest/v1/satellite';
-const API_KEY = process.env.N2YO_API_KEY;
+const N2YO_API_BASE = process.env.N2YO_API_BASE || 'https://api.n2yo.com/rest/v1/satellite';
+const N2YO_API_KEY = process.env.N2YO_API_KEY;
+
+if (!N2YO_API_KEY) {
+  logger.error('N2YO_API_KEY is not configured in environment');
+  throw new Error('N2YO_API_KEY is required');
+}
 
 const sanitizeEndpoint = (endpoint) => {
   // Remove any leading/trailing slashes and normalize
@@ -62,17 +67,17 @@ const sanitizeEndpoint = (endpoint) => {
 
 const fetchFromN2YO = async (endpoint) => {
   try {
-    if (!API_KEY) {
+    if (!N2YO_API_KEY) {
       throw new Error('N2YO API key is not configured');
     }
     
     // Sanitize the endpoint before making the request
     const sanitizedEndpoint = sanitizeEndpoint(endpoint);
-    const url = `${BASE_URL}${sanitizedEndpoint}?apiKey=${API_KEY}`;
+    const url = `${N2YO_API_BASE}${sanitizedEndpoint}&apiKey=${N2YO_API_KEY}`;
     
-    logger.info('Making N2YO API request:', { 
-      timestamp: new Date().toISOString(),
-      endpoint: sanitizedEndpoint
+    logger.info('Making N2YO API request:', {
+      endpoint: sanitizedEndpoint,
+      url: url
     });
     
     const response = await fetch(url, {
@@ -83,35 +88,36 @@ const fetchFromN2YO = async (endpoint) => {
 
     // Handle rate limiting
     if (response.status === 429) {
-      logger.warn('Rate limited by N2YO API', { endpoint });
+      logger.warn('Rate limited by N2YO API', { endpoint: sanitizedEndpoint });
       throw new Error('N2YO API rate limit exceeded. Please try again in a few seconds.');
     }
 
-    if (response.status !== 200) {
+    if (!response.ok) {
       logger.error('N2YO API HTTP error:', {
         endpoint: sanitizedEndpoint,
-        status: response.status,
-        statusText: response.statusText,
-        timestamp: new Date().toISOString()
+        status: response.status
       });
-      throw new Error(`N2YO API HTTP error: ${response.statusText}`);
-    }
-    
-    if (response.data.error) {
-      logger.error('N2YO API response error:', {
-        endpoint: sanitizedEndpoint,
-        error: response.data.error,
-        timestamp: new Date().toISOString()
-      });
-      throw new Error(`N2YO API error: ${response.data.error}`);
+      throw new Error(`N2YO API HTTP error: ${response.status}`);
     }
 
+    const text = await response.text();
+    logger.debug('N2YO API raw response:', { text });
+
+    let data;
+    try {
+      data = JSON.parse(text);
+    } catch (e) {
+      logger.error('Failed to parse N2YO API response:', { text, error: e.message });
+      throw new Error('Invalid JSON response from N2YO API');
+    }
+    
     logger.info('N2YO API Response:', {
       endpoint: sanitizedEndpoint,
       status: response.status,
-      timestamp: new Date().toISOString()
+      data: data
     });
-    return response.data;
+
+    return data;
   } catch (error) {
     if (error.response) {
       const errorMessage = error.response.data.error;
