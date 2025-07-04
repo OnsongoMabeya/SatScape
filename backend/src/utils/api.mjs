@@ -75,8 +75,18 @@ const fetchFromN2YO = async (endpoint) => {
       endpoint: sanitizedEndpoint
     });
     
-    const response = await axios.get(url);
-    
+    const response = await fetch(url, {
+      headers: {
+        'Accept': 'application/json'
+      }
+    });
+
+    // Handle rate limiting
+    if (response.status === 429) {
+      logger.warn('Rate limited by N2YO API', { endpoint });
+      throw new Error('N2YO API rate limit exceeded. Please try again in a few seconds.');
+    }
+
     if (response.status !== 200) {
       logger.error('N2YO API HTTP error:', {
         endpoint: sanitizedEndpoint,

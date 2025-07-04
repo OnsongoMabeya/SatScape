@@ -41,9 +41,9 @@ const useStore = create((set) => ({
         return;
       }
 
-      console.log('Making request to /satellites/above');
+      console.log('Making request to /api/satellites/above');
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/satellites/above?` +
+        `${process.env.NEXT_PUBLIC_API_URL}/api/satellites/above?` +
         new URLSearchParams({
           lat: userLocation.lat,
           lng: userLocation.lng,
@@ -61,13 +61,9 @@ const useStore = create((set) => ({
       console.log('Received satellites:', data.above);
       if (data && data.above) {
         set({ satellites: data.above });
+        // Fetch positions in batches
+        useStore.getState().fetchPositionsInBatches(data.above);
       }
-      
-      // Fetch initial positions for all satellites
-      data.above?.forEach(sat => {
-        console.log('Fetching position for satellite:', sat.satid);
-        useStore.getState().fetchSatellitePositions(sat.satid);
-      });
     } catch (error) {
       console.error('Failed to fetch satellites:', error);
       set({ error: error.message });
@@ -77,13 +73,15 @@ const useStore = create((set) => ({
   fetchSatellitePositions: async (satId) => {
     try {
       const { userLocation } = useStore.getState();
-      if (!userLocation) {
-        console.warn('No user location available');
+      
+      if (!userLocation || !satId) {
+        console.warn('Missing required data for position fetch:', { userLocation, satId });
         return;
       }
 
+      console.log('Fetching position for satellite:', satId);
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/satellites/positions?` +
+        `${process.env.NEXT_PUBLIC_API_URL}/api/satellites/positions?` +
         new URLSearchParams({
           satId,
           lat: userLocation.lat,
@@ -94,21 +92,36 @@ const useStore = create((set) => ({
       );
 
       if (!response.ok) {
-        throw new Error('Failed to fetch satellite positions');
+        if (response.status === 429) { // Rate limit error
+          console.log('Rate limited, retrying after delay...');
+          await new Promise(resolve => setTimeout(resolve, 3000));
+          return fetchSatellitePositions(satId);
+        }
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
 
       const data = await response.json();
-      console.log('Satellite position response:', { satId, data });
       if (data.positions && data.positions.length > 0) {
-        const position = data.positions[0];
-        console.log('Setting satellite position:', { satId, position });
-        useStore.getState().setSatellitePosition(satId, position);
-      } else {
-        console.warn('No position data received for satellite:', satId);
+        useStore.getState().setSatellitePosition(satId, data.positions[0]);
       }
-      return data.positions;
     } catch (error) {
-      console.error('Failed to fetch satellite positions:', error);
+      console.error('Failed to fetch satellite position:', error);
+      useStore.getState().setError(error.message);
+    }
+  },
+
+  fetchPositionsInBatches: async (satellites, batchSize = 5) => {
+    const batches = [];
+    for (let i = 0; i < satellites.length; i += batchSize) {
+      batches.push(satellites.slice(i, i + batchSize));
+    }
+
+    for (const batch of batches) {
+      await Promise.all(batch.map(sat => fetchSatellitePositions(sat.satid)));
+      // Add delay between batches
+      if (batches.indexOf(batch) < batches.length - 1) {
+        await new Promise(resolve => setTimeout(resolve, 3000));
+      }
       set({ error: error.message });
       return null;
     }
@@ -119,7 +132,7 @@ const useStore = create((set) => ({
       if (!satId) return;
 
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/satellites/tle?` +
+        `${process.env.NEXT_PUBLIC_API_URL}/api/satellites/tle?` +
         new URLSearchParams({ satId })
       );
 
