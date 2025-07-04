@@ -13,7 +13,8 @@ class HealthCheck {
     async checkN2YOApi() {
         try {
             // Test N2YO API with a simple request to /above endpoint (less rate-limited)
-            const data = await fetchFromN2YO('/above/41.702/-76.014/0/0');
+            // Test with a basic /above request (using NYC coordinates)
+            const data = await fetchFromN2YO('/above/40.7128/-74.0060/0/45/0');
             
             const isHealthy = !!data;
             this.status.n2yo = isHealthy;

@@ -11,24 +11,52 @@ const sanitizeEndpoint = (endpoint) => {
   // Remove any leading/trailing slashes and normalize
   endpoint = endpoint.replace(/^\/+|\/+$/g, '');
   
-  // Split the endpoint into parts
-  const parts = endpoint.split('/');
-  
-  // For /above endpoint, ensure proper format
-  if (parts[0] === 'above') {
-    const [cmd, lat, lng, alt, radius, category] = parts;
-    // Validate all required parameters are present
-    if (!lat || !lng || !alt || !radius || !category) {
-      throw new Error('Missing required parameters for /above endpoint');
+  // Check if endpoint uses query string format
+  if (endpoint.includes('?')) {
+    const [path, query] = endpoint.split('?');
+    const params = new URLSearchParams(query);
+    
+    // Handle /above endpoint with query parameters
+    if (path === 'above') {
+      const lat = params.get('lat');
+      const lng = params.get('lng');
+      const alt = params.get('alt') || '0';
+      const radius = params.get('radius') || '45';
+      const cat = params.get('cat') || '0';
+      
+      // Validate required parameters
+      if (!lat || !lng) {
+        throw new Error('Missing required parameters lat/lng for /above endpoint');
+      }
+      
+      // Ensure parameters are numeric
+      if ([lat, lng, alt, radius, cat].some(param => isNaN(parseFloat(param)))) {
+        throw new Error('All parameters for /above endpoint must be numeric');
+      }
+      
+      return `/above/${lat}/${lng}/${alt}/${radius}/${cat}`;
     }
-    // Ensure all parameters are numeric
-    if ([lat, lng, alt, radius, category].some(param => isNaN(parseFloat(param)))) {
-      throw new Error('All parameters for /above endpoint must be numeric');
-    }
-    return `/${cmd}/${lat}/${lng}/${alt}/${radius}/${category}`;
+    
+    return '/' + path;
   }
   
-  // For other endpoints, just join with slashes
+  // Handle path format
+  const parts = endpoint.split('/');
+  
+  if (parts[0] === 'above') {
+    const [cmd, lat, lng, alt = '0', radius = '45', cat = '0'] = parts;
+    
+    if (!lat || !lng) {
+      throw new Error('Missing required parameters lat/lng for /above endpoint');
+    }
+    
+    if ([lat, lng, alt, radius, cat].some(param => isNaN(parseFloat(param)))) {
+      throw new Error('All parameters for /above endpoint must be numeric');
+    }
+    
+    return `/${cmd}/${lat}/${lng}/${alt}/${radius}/${cat}`;
+  }
+  
   return '/' + parts.join('/');
 };
 
