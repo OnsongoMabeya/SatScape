@@ -68,23 +68,16 @@ export default function Globe() {
     }
   }, []);
 
-  // Update satellite positions every second
-  // Fetch satellite positions periodically
+  // Update satellite positions periodically
   useEffect(() => {
     if (!satellites?.length) return;
 
-    console.log('Satellites data:', satellites); // Debug log
-
-    // Initial fetch
-    satellites.forEach(sat => {
-      useStore.getState().fetchSatellitePositions(sat.satid);
-    });
+    // Initial fetch of positions
+    useStore.getState().fetchPositionsInBatches(satellites);
 
     // Update positions every 10 seconds
     const interval = setInterval(() => {
-      satellites.forEach(sat => {
-        useStore.getState().fetchSatellitePositions(sat.satid);
-      });
+      useStore.getState().fetchPositionsInBatches(satellites);
     }, 10000);
 
     return () => clearInterval(interval);

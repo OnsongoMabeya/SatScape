@@ -27,7 +27,10 @@ const useStore = create((set) => ({
 
   // Error handling
   error: null,
-  setError: (error) => set({ error }),
+  setError: (error) => {
+    console.error('Application error:', error);
+    set({ error: error?.message || error });
+  },
   clearError: () => set({ error: null }),
 
   // API calls
@@ -69,8 +72,7 @@ const useStore = create((set) => ({
       // Fetch positions in batches
       useStore.getState().fetchPositionsInBatches(data.above);
     } catch (error) {
-      console.error('Failed to fetch satellites:', error);
-      set({ error: error.message });
+      useStore.getState().setError(error);
     }
   },
 
@@ -155,8 +157,7 @@ const useStore = create((set) => ({
       const data = await response.json();
       return data.tle;
     } catch (error) {
-      console.error('Failed to fetch satellite TLE:', error);
-      set({ error: error.message });
+      useStore.getState().setError(error);
       return null;
     }
   }

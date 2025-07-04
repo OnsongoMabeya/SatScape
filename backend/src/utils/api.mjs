@@ -4,10 +4,16 @@ import logger from './logger.mjs';
 
 dotenv.config();
 
-const N2YO_API_BASE = process.env.N2YO_API_BASE || 'https://api.n2yo.com/rest/v1/satellite';
-const N2YO_API_KEY = process.env.N2YO_API_KEY;
+// API configuration
+const N2YO_API_CONFIG = {
+  baseUrl: process.env.N2YO_API_BASE || 'https://api.n2yo.com/rest/v1/satellite',
+  apiKey: process.env.N2YO_API_KEY,
+  defaultHeaders: {
+    'Accept': 'application/json'
+  }
+};
 
-if (!N2YO_API_KEY) {
+if (!N2YO_API_CONFIG.apiKey) {
   logger.error('N2YO_API_KEY is not configured in environment');
   throw new Error('N2YO_API_KEY is required');
 }
@@ -73,17 +79,14 @@ const fetchFromN2YO = async (endpoint) => {
     
     // Sanitize the endpoint before making the request
     const sanitizedEndpoint = sanitizeEndpoint(endpoint);
-    const url = `${N2YO_API_BASE}${sanitizedEndpoint}&apiKey=${N2YO_API_KEY}`;
+    const url = `${N2YO_API_CONFIG.baseUrl}${sanitizedEndpoint}&apiKey=${N2YO_API_CONFIG.apiKey}`;
     
     logger.info('Making N2YO API request:', {
-      endpoint: sanitizedEndpoint,
-      url: url
+      endpoint: sanitizedEndpoint
     });
     
     const response = await fetch(url, {
-      headers: {
-        'Accept': 'application/json'
-      }
+      headers: N2YO_API_CONFIG.defaultHeaders
     });
 
     // Handle rate limiting

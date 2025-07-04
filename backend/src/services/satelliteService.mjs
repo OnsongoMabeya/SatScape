@@ -2,17 +2,47 @@ import NodeCache from 'node-cache';
 import { fetchFromN2YO } from '../utils/api.mjs';
 import pLimit from 'p-limit';
 
-// Cache with TTL of 2 minutes for positions and 5 minutes for other data
-const positionsCache = new NodeCache({ stdTTL: 120 }); // Increased from 30s to 120s
-const satelliteCache = new NodeCache({ stdTTL: 300 });
+// Cache configuration
+const CACHE_CONFIG = {
+  positions: { ttl: 120 }, // 2 minutes for positions
+  satellites: { ttl: 300 }, // 5 minutes for satellite data
+  tle: { ttl: 300 } // 5 minutes for TLE data
+};
 
-// Limit to 30 requests per minute (N2YO's limit)
-const limit = pLimit(1); // Only 1 concurrent request
-const requestQueue = [];
+// Initialize caches
+const caches = {
+  positions: new NodeCache({ stdTTL: CACHE_CONFIG.positions.ttl }),
+  satellites: new NodeCache({ stdTTL: CACHE_CONFIG.satellites.ttl }),
+  tle: new NodeCache({ stdTTL: CACHE_CONFIG.tle.ttl })
+};
+
+// Rate limiting configuration
+const RATE_LIMIT_CONFIG = {
+  minInterval: 3000, // 3 seconds between requests
+  maxConcurrent: 1 // Only 1 concurrent request
+};
+
+// Initialize rate limiter
+const limit = pLimit(RATE_LIMIT_CONFIG.maxConcurrent);
 let lastRequestTime = 0;
-const MIN_REQUEST_INTERVAL = 3000; // 3 seconds between requests to avoid rate limits
 
-const TLE_CACHE_TTL = 300; // 5 minutes for TLE data
+// Validate N2YO API response
+const validateN2YOResponse = (response, requiredFields = []) => {
+  if (!response) {
+    throw new Error('Empty response from N2YO API');
+  }
+
+  for (const field of requiredFields) {
+    if (!response[field]) {
+      throw new Error(`Missing ${field} field in N2YO API response`);
+    }
+
+    // Check if field should be an array
+    if (['above', 'positions'].includes(field) && !Array.isArray(response[field])) {
+      throw new Error(`Invalid ${field} field in N2YO API response: expected array`);
+    }
+  }
+};
 
 const getSatellitesAbove = async (lat, lng, alt = 0, cat = 0) => {
   // Parse and validate numeric parameters
@@ -37,14 +67,21 @@ const getSatellitesAbove = async (lat, lng, alt = 0, cat = 0) => {
   
   if (cached) return cached;
 
-  // Add request to queue with throttling
-  const makeRequest = async () => {
+  const throttleRequest = async () => {
     const now = Date.now();
     const timeSinceLastRequest = now - lastRequestTime;
     
-    if (timeSinceLastRequest < MIN_REQUEST_INTERVAL) {
-      await new Promise(resolve => setTimeout(resolve, MIN_REQUEST_INTERVAL - timeSinceLastRequest));
+    if (timeSinceLastRequest < RATE_LIMIT_CONFIG.minInterval) {
+      await new Promise(resolve => 
+        setTimeout(resolve, RATE_LIMIT_CONFIG.minInterval - timeSinceLastRequest)
+      );
     }
+    lastRequestTime = now;
+  };
+
+  // Add request to queue with throttling
+  const makeRequest = async () => {
+    await throttleRequest();
 
     // N2YO API format: /above/{observer_lat}/{observer_lng}/{observer_alt}/{search_radius}/{category_id}
     // Search radius of 45 degrees (90 degrees total view)
@@ -56,21 +93,7 @@ const getSatellitesAbove = async (lat, lng, alt = 0, cat = 0) => {
     try {
       const response = await fetchFromN2YO(endpoint);
       
-      // Ensure we have valid data
-      if (!response) {
-        throw new Error('Empty response from N2YO API');
-      }
-      
-      // N2YO API returns info and above fields
-      if (!response.info) {
-        console.error('Missing info in response:', response);
-        throw new Error('Missing info field in N2YO API response');
-      }
-      
-      if (!response.above || !Array.isArray(response.above)) {
-        console.error('Missing or invalid above field:', response);
-        throw new Error('Missing or invalid above field in N2YO API response');
-      }
+      validateN2YOResponse(response, ['info', 'above']);
 
       // If a specific category was requested, filter the results
       const data = {
@@ -78,7 +101,7 @@ const getSatellitesAbove = async (lat, lng, alt = 0, cat = 0) => {
         above: cat ? response.above.filter(sat => sat.satid) : response.above
       };
       
-      satelliteCache.set(cacheKey, data);
+      caches.satellites.set(cacheKey, data);
       return data;
     } catch (error) {
       if (error.message.includes('exceeded the number of transactions')) {
@@ -95,18 +118,24 @@ const getSatellitesAbove = async (lat, lng, alt = 0, cat = 0) => {
 
 const getSatellitePositions = async (satId, lat, lng, alt = 0, seconds = 2) => {
   const cacheKey = `positions-${satId}-${lat}-${lng}-${alt}-${seconds}`;
-  const cached = positionsCache.get(cacheKey);
-  
+  const cached = caches.positions.get(cacheKey);
   if (cached) return cached;
 
-  // Add request to queue with throttling
-  const makeRequest = async () => {
+  const throttleRequest = async () => {
     const now = Date.now();
     const timeSinceLastRequest = now - lastRequestTime;
     
-    if (timeSinceLastRequest < MIN_REQUEST_INTERVAL) {
-      await new Promise(resolve => setTimeout(resolve, MIN_REQUEST_INTERVAL - timeSinceLastRequest));
+    if (timeSinceLastRequest < RATE_LIMIT_CONFIG.minInterval) {
+      await new Promise(resolve => 
+        setTimeout(resolve, RATE_LIMIT_CONFIG.minInterval - timeSinceLastRequest)
+      );
     }
+    lastRequestTime = now;
+  };
+
+  // Add request to queue with throttling
+  const makeRequest = async () => {
+    await throttleRequest();
 
     const endpoint = `/positions/${satId}/${lat}/${lng}/${alt}/${seconds}`;
     lastRequestTime = Date.now();
@@ -114,28 +143,14 @@ const getSatellitePositions = async (satId, lat, lng, alt = 0, seconds = 2) => {
     try {
       const response = await fetchFromN2YO(endpoint);
       
-      // Ensure we have valid data
-      if (!response) {
-        throw new Error('Empty response from N2YO API');
-      }
-      
-      // N2YO API returns info and positions fields
-      if (!response.info) {
-        console.error('Missing info in positions response:', response);
-        throw new Error('Missing info field in N2YO API response');
-      }
-      
-      if (!response.positions || !Array.isArray(response.positions)) {
-        console.error('Missing or invalid positions field:', response);
-        throw new Error('Missing or invalid positions field in N2YO API response');
-      }
+      validateN2YOResponse(response, ['info', 'positions']);
       
       const data = {
         info: response.info,
         positions: response.positions
       };
       
-      positionsCache.set(cacheKey, data);
+      caches.positions.set(cacheKey, data);
       return data;
     } catch (error) {
       if (error.message.includes('exceeded the number of transactions')) {
@@ -156,26 +171,33 @@ const getSatelliteTLE = async (satId) => {
   
   if (cached) return cached;
 
-  // Add request to queue with throttling
-  const makeRequest = async () => {
+  const throttleRequest = async () => {
     const now = Date.now();
     const timeSinceLastRequest = now - lastRequestTime;
     
-    if (timeSinceLastRequest < MIN_REQUEST_INTERVAL) {
-      await new Promise(resolve => setTimeout(resolve, MIN_REQUEST_INTERVAL - timeSinceLastRequest));
+    if (timeSinceLastRequest < RATE_LIMIT_CONFIG.minInterval) {
+      await new Promise(resolve => 
+        setTimeout(resolve, RATE_LIMIT_CONFIG.minInterval - timeSinceLastRequest)
+      );
     }
+    lastRequestTime = now;
+  };
+
+  // Add request to queue with throttling
+  const makeRequest = async () => {
+    await throttleRequest();
 
     const endpoint = `/tle/${satId}`;
     lastRequestTime = Date.now();
 
     try {
-      const data = await fetchFromN2YO(endpoint);
+      const response = await fetchFromN2YO(endpoint);
       
-      if (!data || !data.tle) {
-        throw new Error('Failed to fetch satellite TLE');
-      }
+      validateN2YOResponse(response, ['info', 'tle']);
+
+      const data = response;
       
-      satelliteCache.set(cacheKey, data, TLE_CACHE_TTL);
+      caches.tle.set(cacheKey, data);
       return data;
     } catch (error) {
       if (error.message.includes('exceeded the number of transactions')) {
