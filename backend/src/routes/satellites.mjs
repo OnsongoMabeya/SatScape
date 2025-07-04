@@ -7,46 +7,13 @@ router.get('/above', async (req, res, next) => {
   try {
     const { lat, lng, alt = 0, cat = 0 } = req.query;
     
-    // Validate required parameters
-    if (!lat || !lng) {
-      return res.status(400).json({ error: 'Missing required parameters: lat, lng' });
-    }
-
     // Parse and validate numeric parameters
     const parsedLat = parseFloat(lat);
     const parsedLng = parseFloat(lng);
     const parsedAlt = parseFloat(alt);
-    const parsedCat = parseInt(cat, 10);
+    const parsedCat = parseInt(cat, 10) || 0;
 
-    if (isNaN(parsedLat) || isNaN(parsedLng)) {
-      return res.status(400).json({ error: 'Invalid lat/lng values. Must be valid numbers.' });
-    }
-
-    if (isNaN(parsedAlt)) {
-      return res.status(400).json({ error: 'Invalid altitude value. Must be a valid number.' });
-    }
-
-    if (isNaN(parsedCat)) {
-      return res.status(400).json({ error: 'Invalid category value. Must be a valid integer.' });
-    }
-
-    // Validate value ranges
-    if (parsedLat < -90 || parsedLat > 90) {
-      return res.status(400).json({ error: 'Latitude must be between -90 and 90 degrees' });
-    }
-
-    if (parsedLng < -180 || parsedLng > 180) {
-      return res.status(400).json({ error: 'Longitude must be between -180 and 180 degrees' });
-    }
-
-    if (parsedAlt < 0) {
-      return res.status(400).json({ error: 'Altitude must be non-negative' });
-    }
-
-    if (parsedCat < 0) {
-      return res.status(400).json({ error: 'Category must be non-negative' });
-    }
-
+    // Let the service handle validation and throw appropriate errors
     const data = await getSatellitesAbove(parsedLat, parsedLng, parsedAlt, parsedCat);
     res.json(data);
   } catch (error) {
@@ -99,6 +66,12 @@ router.get('/tle', async (req, res, next) => {
   } catch (error) {
     next(error);
   }
+});
+
+// Error handling middleware
+router.use((err, req, res, next) => {
+  console.error('Error in satellites route:', err);
+  res.status(400).json({ error: err.message });
 });
 
 export default router;

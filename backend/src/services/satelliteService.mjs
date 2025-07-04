@@ -48,8 +48,8 @@ const getSatellitesAbove = async (lat, lng, alt = 0, cat = 0) => {
 
     // N2YO API format: /above/{observer_lat}/{observer_lng}/{observer_alt}/{search_radius}/{category_id}
     // Search radius of 45 degrees (90 degrees total view)
+    const searchRadius = 45; // Fixed search radius for better coverage
     // Category 0 means all satellites
-    const searchRadius = 45;
     const endpoint = `/above/${parsedLat}/${parsedLng}/${parsedAlt}/${searchRadius}/${parsedCat}`;
     lastRequestTime = Date.now();
 
