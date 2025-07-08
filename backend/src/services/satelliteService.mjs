@@ -63,7 +63,7 @@ const getSatellitesAbove = async (lat, lng, alt = 0, cat = 0) => {
   }
 
   const cacheKey = `above-${parsedLat}-${parsedLng}-${parsedAlt}-${parsedCat}`;
-  const cached = satelliteCache.get(cacheKey);
+  const cached = caches.satellites.get(cacheKey);
   
   if (cached) return cached;
 
