@@ -28,6 +28,34 @@ if (typeof window !== 'undefined') {
 }
 
 export default function Globe() {
+  const [viewer, setViewer] = useState(null);
+  const { 
+    satellites, 
+    satellitePositions, 
+    selectedSatellite, 
+    setSelectedSatellite, 
+    userLocation,
+    setUserLocation 
+  } = useStore();
+
+  // Handle map click events
+  const handleMapClick = (movement) => {
+    if (!viewer) return;
+
+    // Get the clicked entity
+    const pickedObject = viewer.scene.pick(movement.position);
+    if (Cesium?.defined(pickedObject)) {
+      const entity = pickedObject.id;
+      const satId = entity?.id;
+      const satellite = satellites?.find(s => s.satid === satId);
+      if (satellite) {
+        setSelectedSatellite(satellite);
+      }
+    } else {
+      setSelectedSatellite(null);
+    }
+  };
+
   // Configure Cesium Ion token
   useEffect(() => {
     if (!process.env.NEXT_PUBLIC_CESIUM_ION_TOKEN) {
@@ -37,36 +65,12 @@ export default function Globe() {
     Cesium.Ion.defaultAccessToken = process.env.NEXT_PUBLIC_CESIUM_ION_TOKEN;
   }, []);
 
-  const { userLocation, satellites, satellitePositions, selectedSatellite } = useStore();
-  const [viewer, setViewer] = useState(null);
-
-  // Initialize viewer settings
-  useEffect(() => {
-    if (!viewer) return;
-
-    console.log('Initializing viewer settings');
-    
-    // Enable lighting and configure globe
-    viewer.scene.globe.enableLighting = true;
-    viewer.scene.fog.enabled = false;
-    viewer.scene.globe.showGroundAtmosphere = true;
-    viewer.scene.globe.depthTestAgainstTerrain = true;
-
-    // Set initial camera position
-    viewer.camera.setView({
-      destination: Cesium.Cartesian3.fromDegrees(0, 0, 20000000)
-    });
-
-    // Enable smooth camera animations
-    viewer.scene.tweening = true;
-  }, [viewer]);
-
   // Get user location and initialize satellites
   useEffect(() => {
     console.log('Getting user location...');
     const defaultLocation = { lat: -1.2921, lng: 36.8219 }; // Nairobi as default
 
-    if (navigator.geolocation) {
+    if (typeof window !== 'undefined' && navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (position) => {
           console.log('Got user position:', position.coords);
@@ -74,69 +78,67 @@ export default function Globe() {
             lat: position.coords.latitude,
             lng: position.coords.longitude
           };
-          useStore.getState().setUserLocation(location);
+          setUserLocation(location);
         },
         (error) => {
-          console.error('Error getting location:', {
-            code: error.code,
-            message: error.message
-          });
-          // Handle specific geolocation errors
-          switch (error.code) {
-            case error.PERMISSION_DENIED:
-              console.log('Location permission denied by user');
-              break;
-            case error.POSITION_UNAVAILABLE:
-              console.log('Location information unavailable');
-              break;
-            case error.TIMEOUT:
-              console.log('Location request timed out');
-              break;
-            default:
-              console.log('Unknown error occurred while getting location');
-          }
-          console.log('Using default location (Nairobi)');
-          useStore.getState().setUserLocation(defaultLocation);
+          console.error('Error getting location:', error);
+          setUserLocation(defaultLocation);
         }
       );
     } else {
-      console.warn('Geolocation not supported');
-      console.log('Using default location (Nairobi)');
-      useStore.getState().setUserLocation(defaultLocation);
+      console.log('Geolocation not available, using default location');
+      setUserLocation(defaultLocation);
     }
-  }, []);
+  }, [setUserLocation]);
 
   // Update satellite positions periodically
   useEffect(() => {
     if (!satellites?.length) return;
 
     // Initial fetch of positions
-    useStore.getState().fetchPositionsInBatches(satellites);
+    const fetchPositions = () => {
+      satellites.forEach((satellite) => {
+        if (userLocation) {
+          useStore.getState().fetchSatellitePosition(satellite.satid);
+        }
+      });
+    };
+
+    fetchPositions();
 
     // Update positions every 10 seconds
-    const interval = setInterval(() => {
-      useStore.getState().fetchPositionsInBatches(satellites);
-    }, 10000);
+    const interval = setInterval(fetchPositions, 10000);
 
     return () => clearInterval(interval);
-  }, [satellites]);
+  }, [satellites, userLocation]);
+
+  // Initialize viewer settings and handle camera position
   useEffect(() => {
-    if (viewer && userLocation) {
+    if (!viewer) return;
+
+    // Enable lighting and configure globe
+    viewer.scene.globe.enableLighting = true;
+    viewer.scene.fog.enabled = false;
+    viewer.scene.globe.showGroundAtmosphere = true;
+    viewer.scene.globe.depthTestAgainstTerrain = true;
+    viewer.scene.tweening = true;
+
+    // Set camera position based on user location or default view
+    if (userLocation) {
       viewer.camera.flyTo({
         destination: Cesium.Cartesian3.fromDegrees(
           userLocation.lng,
           userLocation.lat,
-          1000000.0
+          1000000
         ),
+        duration: 2
+      });
+    } else {
+      viewer.camera.setView({
+        destination: Cesium.Cartesian3.fromDegrees(0, 0, 20000000)
       });
     }
   }, [viewer, userLocation]);
-
-  const handleReady = (tileset) => {
-    if (tileset && tileset.cesiumElement) {
-      setViewer(tileset.cesiumElement);
-    }
-  };
 
   if (!Cesium) return null;
 
@@ -151,59 +153,77 @@ export default function Globe() {
       timeline={false}
       animation={false}
       baseLayerPicker={false}
+      navigationHelpButton={false}
+      homeButton={false}
+      geocoder={false}
       onClick={handleMapClick}
+      scene3DOnly={true}
     >
       {userLocation && (
         <ResiumComponents.Entity
-          position={Cesium?.Cartesian3.fromDegrees(
+          position={Cesium.Cartesian3.fromDegrees(
             userLocation.lng,
             userLocation.lat,
             0
           )}
           point={{
             pixelSize: 10,
-            color: Cesium?.Color.RED,
-            outlineColor: Cesium?.Color.WHITE,
+            color: Cesium.Color.BLUE,
+            outlineColor: Cesium.Color.WHITE,
             outlineWidth: 2
+          }}
+          label={{
+            text: 'Your Location',
+            font: '14px sans-serif',
+            fillColor: Cesium.Color.WHITE,
+            outlineColor: Cesium.Color.BLACK,
+            outlineWidth: 2,
+            style: Cesium.LabelStyle.FILL_AND_OUTLINE,
+            verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
+            pixelOffset: new Cesium.Cartesian2(0, -10)
           }}
         />
       )}
 
-      {satellites?.map(satellite => {
-        const satPosition = satellitePositions[satellite.satid];
-        if (!satPosition || !Cesium) return null;
+      {satellites?.map((satellite) => {
+        const position = satellitePositions?.[satellite.satid];
+        if (!position) return null;
 
+        const isSelected = selectedSatellite?.satid === satellite.satid;
         return (
           <ResiumComponents.Entity
             key={satellite.satid}
+            id={satellite.satid}
             position={Cesium.Cartesian3.fromDegrees(
-              satPosition.satlongitude,
-              satPosition.satlatitude,
-              satPosition.sataltitude * 1000
+              position.satlongitude,
+              position.satlatitude,
+              position.sataltitude * 1000
             )}
             point={{
-              pixelSize: 12,
-              color: selectedSatellite?.satid === satellite.satid
-                ? Cesium.Color.YELLOW
-                : Cesium.Color.CYAN,
+              pixelSize: isSelected ? 12 : 8,
+              color: isSelected ? Cesium.Color.YELLOW : Cesium.Color.RED,
               outlineColor: Cesium.Color.WHITE,
-              outlineWidth: 2
+              outlineWidth: 2,
+              scaleByDistance: new Cesium.NearFarScalar(1.5e2, 1.5, 8.0e6, 0.8)
             }}
             label={{
               text: satellite.satname,
-              font: '12px Roboto',
-              style: Cesium.LabelStyle.FILL_AND_OUTLINE,
+              show: isSelected,
+              font: '14px sans-serif',
+              fillColor: Cesium.Color.WHITE,
+              outlineColor: Cesium.Color.BLACK,
               outlineWidth: 2,
+              style: Cesium.LabelStyle.FILL_AND_OUTLINE,
               verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
-              pixelOffset: new Cesium.Cartesian2(0, -10)
+              pixelOffset: new Cesium.Cartesian2(0, -10),
+              scaleByDistance: new Cesium.NearFarScalar(1.5e2, 1.5, 8.0e6, 0.8)
             }}
             path={{
+              show: isSelected,
               resolution: 1,
               material: new Cesium.PolylineGlowMaterialProperty({
                 glowPower: 0.2,
-                color: selectedSatellite?.satid === satellite.satid 
-                  ? Cesium.Color.YELLOW 
-                  : Cesium.Color.CYAN
+                color: Cesium.Color.YELLOW
               }),
               width: 2
             }}
