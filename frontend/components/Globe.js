@@ -1,13 +1,30 @@
 'use client';
 
+import dynamic from 'next/dynamic';
 import { useEffect, useState } from 'react';
-import { Viewer, Entity } from 'resium';
-import * as Cesium from 'cesium';
 import useStore from '../store/useStore';
+
+// Dynamically import Cesium components with no SSR
+const CesiumViewer = dynamic(
+  () => import('resium').then(mod => {
+    // Configure Cesium after import
+    const Cesium = require('cesium');
+    window.CESIUM_BASE_URL = '/cesium';
+    return mod.Viewer;
+  }),
+  { ssr: false }
+);
+
+const CesiumEntity = dynamic(
+  () => import('resium').then(mod => mod.Entity),
+  { ssr: false }
+);
+
+// Import Cesium styles
 import 'cesium/Build/Cesium/Widgets/widgets.css';
 
-// Configure Cesium
-window.CESIUM_BASE_URL = '/cesium';
+// Import Cesium for types
+const Cesium = typeof window !== 'undefined' ? require('cesium') : null;
 
 export default function Globe() {
   // Configure Cesium Ion token
@@ -120,8 +137,10 @@ export default function Globe() {
     }
   };
 
+  if (!Cesium) return null;
+
   return (
-    <Viewer
+    <CesiumViewer
       full
       ref={(e) => {
         if (e?.cesiumElement) {
@@ -138,7 +157,7 @@ export default function Globe() {
       scene3DOnly={false}
     >
       {userLocation && (
-        <Entity
+        <CesiumEntity
           position={Cesium.Cartesian3.fromDegrees(
             userLocation.lng,
             userLocation.lat,
@@ -156,7 +175,7 @@ export default function Globe() {
         }
         
         return (
-          <Entity
+          <CesiumEntity
             key={satellite.satid}
             position={Cesium.Cartesian3.fromDegrees(
               satPosition.satlongitude,
@@ -192,6 +211,6 @@ export default function Globe() {
           />
         );
       })}
-    </Viewer>
+    </CesiumViewer>
   );
 }
