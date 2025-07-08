@@ -29,8 +29,8 @@ app.use(cors({
 app.use(express.json());
 
 // Routes
-app.use('/api/health', healthRoutes);
-app.use('/api/satellites', satelliteRoutes);
+app.use('/health', healthRoutes);
+app.use('/satellites', satelliteRoutes);
 
 // Error handling middleware
 app.use((err, req, res, next) => {

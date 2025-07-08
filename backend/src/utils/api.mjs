@@ -2,7 +2,7 @@ import dotenv from 'dotenv';
 import axios from 'axios';
 import logger from './logger.mjs';
 
-dotenv.config({ path: new URL('../../.env', import.meta.url).pathname });
+dotenv.config({ path: new URL('../../../.env', import.meta.url).pathname });
 
 // API configuration
 const N2YO_API_CONFIG = {

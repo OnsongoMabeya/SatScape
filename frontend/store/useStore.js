@@ -44,9 +44,9 @@ const useStore = create((set) => ({
         return;
       }
 
-      console.log('Making request to /api/satellites/above');
+      console.log('Making request to /satellites/above');
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/satellites/above?` +
+        `${process.env.NEXT_PUBLIC_API_URL}/satellites/above?` +
         new URLSearchParams({
           lat: userLocation.lat,
           lng: userLocation.lng,
@@ -90,7 +90,7 @@ const useStore = create((set) => ({
         }
 
         const response = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/api/satellites/positions?` +
+          `${process.env.NEXT_PUBLIC_API_URL}/satellites/positions?` +
           new URLSearchParams({
             satId,
             lat: userLocation.lat,
@@ -188,7 +188,7 @@ const useStore = create((set) => ({
       if (!satId) return;
 
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/satellites/tle?` +
+        `${process.env.NEXT_PUBLIC_API_URL}/satellites/tle?` +
         new URLSearchParams({ satId })
       );
 
