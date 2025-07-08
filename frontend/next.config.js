@@ -1,6 +1,12 @@
 const CopyWebpackPlugin = require('copy-webpack-plugin');
 const path = require('path');
-require('dotenv').config({ path: path.resolve(__dirname, '../.env') });
+
+// Load environment variables from .env file if it exists
+try {
+  require('dotenv').config({ path: path.resolve(__dirname, '../.env') });
+} catch (error) {
+  console.warn('No .env file found, using default environment variables');
+}
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
