@@ -28,8 +28,23 @@ const useStore = create((set) => ({
   // Error handling
   error: null,
   setError: (error) => {
-    console.error('Application error:', error);
-    set({ error: error?.message || error });
+    // Handle different error types
+    let errorMessage;
+    if (error instanceof Error) {
+      console.error('Application error:', {
+        name: error.name,
+        message: error.message,
+        stack: error.stack
+      });
+      errorMessage = error.message;
+    } else if (typeof error === 'object') {
+      console.error('Application error:', JSON.stringify(error, null, 2));
+      errorMessage = error.message || 'An unknown error occurred';
+    } else {
+      console.error('Application error:', error);
+      errorMessage = String(error);
+    }
+    set({ error: errorMessage });
   },
   clearError: () => set({ error: null }),
 

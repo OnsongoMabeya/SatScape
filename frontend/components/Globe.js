@@ -59,7 +59,24 @@ export default function Globe() {
           useStore.getState().setUserLocation(location);
         },
         (error) => {
-          console.error('Error getting location:', error);
+          console.error('Error getting location:', {
+            code: error.code,
+            message: error.message
+          });
+          // Handle specific geolocation errors
+          switch (error.code) {
+            case error.PERMISSION_DENIED:
+              console.log('Location permission denied by user');
+              break;
+            case error.POSITION_UNAVAILABLE:
+              console.log('Location information unavailable');
+              break;
+            case error.TIMEOUT:
+              console.log('Location request timed out');
+              break;
+            default:
+              console.log('Unknown error occurred while getting location');
+          }
           console.log('Using default location (Nairobi)');
           useStore.getState().setUserLocation(defaultLocation);
         }
