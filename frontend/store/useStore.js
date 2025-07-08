@@ -44,14 +44,18 @@ const useStore = create((set) => ({
         return;
       }
 
+      if (!process.env.NEXT_PUBLIC_API_URL) {
+        throw new Error('API URL not found in environment variables');
+      }
+
       console.log('Making request to /satellites/above');
+      const params = new URLSearchParams({
+        lat: userLocation.lat,
+        lng: userLocation.lng,
+        alt: 0
+      });
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/satellites/above?` +
-        new URLSearchParams({
-          lat: userLocation.lat,
-          lng: userLocation.lng,
-          alt: 0
-        })
+        `${process.env.NEXT_PUBLIC_API_URL}/satellites/above?${params}`
       );
 
       if (!response.ok) {
