@@ -56,7 +56,7 @@ const useStore = create((set) => ({
         alt: 0
       });
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/satellites/above?${params}`
+        `${process.env.NEXT_PUBLIC_API_URL}/satellites/above?${params}`.replace('/api/', '/')
       );
 
       if (!response.ok) {
