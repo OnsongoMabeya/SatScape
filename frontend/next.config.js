@@ -15,6 +15,12 @@ const nextConfig = {
     NEXT_PUBLIC_CESIUM_ION_TOKEN: process.env.NEXT_PUBLIC_CESIUM_ION_TOKEN,
   },
   webpack: (config, { buildId, dev, isServer, defaultLoaders, webpack }) => {
+    // Don't attempt to minify worker files
+    config.optimization = {
+      ...config.optimization,
+      minimize: false
+    };
+    
     if (!isServer) {
       config.plugins.push(
         new CopyWebpackPlugin({
