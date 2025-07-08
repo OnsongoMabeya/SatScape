@@ -1,9 +1,6 @@
 'use client';
 
 import { create } from 'zustand';
-import getConfig from 'next/config';
-
-const { publicRuntimeConfig } = getConfig() || {};
 
 const useStore = create((set) => ({
   // User location state
@@ -47,7 +44,7 @@ const useStore = create((set) => ({
         return;
       }
 
-      if (!publicRuntimeConfig?.NEXT_PUBLIC_API_URL) {
+      if (!process.env.NEXT_PUBLIC_API_URL) {
         console.error('API URL not found in environment variables');
         return;
       }
@@ -59,7 +56,7 @@ const useStore = create((set) => ({
         alt: 0
       });
       const response = await fetch(
-        `${publicRuntimeConfig.NEXT_PUBLIC_API_URL}/satellites/above?${params}`
+        `${process.env.NEXT_PUBLIC_API_URL}/satellites/above?${params}`
       );
 
       if (!response.ok) {
