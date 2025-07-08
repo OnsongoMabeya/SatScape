@@ -2,7 +2,7 @@ import dotenv from 'dotenv';
 import axios from 'axios';
 import logger from './logger.mjs';
 
-dotenv.config();
+dotenv.config({ path: new URL('../../.env', import.meta.url).pathname });
 
 // API configuration
 const N2YO_API_CONFIG = {
@@ -12,6 +12,16 @@ const N2YO_API_CONFIG = {
     'Accept': 'application/json'
   }
 };
+
+// Debug environment variables
+logger.info('API Configuration:', {
+  baseUrl: N2YO_API_CONFIG.baseUrl,
+  hasApiKey: !!N2YO_API_CONFIG.apiKey,
+  envVars: {
+    N2YO_API_KEY: process.env.N2YO_API_KEY ? 'Set' : 'Not Set',
+    N2YO_API_BASE: process.env.N2YO_API_BASE ? 'Set' : 'Not Set'
+  }
+});
 
 if (!N2YO_API_CONFIG.apiKey) {
   logger.error('N2YO_API_KEY is not configured in environment');
@@ -73,13 +83,15 @@ const sanitizeEndpoint = (endpoint) => {
 
 const fetchFromN2YO = async (endpoint) => {
   try {
-    if (!N2YO_API_KEY) {
+    if (!N2YO_API_CONFIG.apiKey) {
       throw new Error('N2YO API key is not configured');
     }
     
     // Sanitize the endpoint before making the request
     const sanitizedEndpoint = sanitizeEndpoint(endpoint);
-    const url = `${N2YO_API_CONFIG.baseUrl}${sanitizedEndpoint}&apiKey=${N2YO_API_CONFIG.apiKey}`;
+    
+    // Construct URL with API key
+    const url = `${N2YO_API_CONFIG.baseUrl}${sanitizedEndpoint}?apiKey=${N2YO_API_CONFIG.apiKey}`;
     
     logger.info('Making N2YO API request:', {
       endpoint: sanitizedEndpoint

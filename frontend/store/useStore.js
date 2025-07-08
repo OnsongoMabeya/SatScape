@@ -125,19 +125,21 @@ const useStore = create((set) => ({
   },
 
   fetchPositionsInBatches: async (satellites, batchSize = 5) => {
-    const batches = [];
-    for (let i = 0; i < satellites.length; i += batchSize) {
-      batches.push(satellites.slice(i, i + batchSize));
-    }
-
-    for (const batch of batches) {
-      await Promise.all(batch.map(sat => fetchSatellitePositions(sat.satid)));
-      // Add delay between batches
-      if (batches.indexOf(batch) < batches.length - 1) {
-        await new Promise(resolve => setTimeout(resolve, 3000));
+    try {
+      const batches = [];
+      for (let i = 0; i < satellites.length; i += batchSize) {
+        batches.push(satellites.slice(i, i + batchSize));
       }
-      set({ error: error.message });
-      return null;
+
+      for (const batch of batches) {
+        await Promise.all(batch.map(sat => useStore.getState().fetchSatellitePositions(sat.satid)));
+        // Add delay between batches to respect rate limits
+        if (batches.indexOf(batch) < batches.length - 1) {
+          await new Promise(resolve => setTimeout(resolve, 3000));
+        }
+      }
+    } catch (error) {
+      useStore.getState().setError(error.message);
     }
   },
 
