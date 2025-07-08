@@ -77,69 +77,109 @@ const useStore = create((set) => ({
   },
 
   fetchSatellitePositions: async (satId) => {
-    try {
-      const { userLocation } = useStore.getState();
-      
-      if (!userLocation || !satId) {
-        console.warn('Missing required data for position fetch:', { userLocation, satId });
-        return;
-      }
+    const maxRetries = 2;
+    let retryCount = 0;
 
-      console.log('Fetching position for satellite:', satId);
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/satellites/positions?` +
-        new URLSearchParams({
-          satId,
-          lat: userLocation.lat,
-          lng: userLocation.lng,
-          alt: 0,
-          seconds: 2
-        })
-      );
-
-      if (!response.ok) {
-        if (response.status === 429) { // Rate limit error
-          console.log('Rate limited, retrying after delay...');
-          await new Promise(resolve => setTimeout(resolve, 3000));
-          return fetchSatellitePositions(satId);
+    const fetchWithRetry = async () => {
+      try {
+        const { userLocation } = useStore.getState();
+        
+        if (!userLocation || !satId) {
+          console.warn('Missing required data for position fetch:', { userLocation, satId });
+          return;
         }
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
 
-      const data = await response.json();
-      
-      if (!data || !data.info || !data.positions || !Array.isArray(data.positions)) {
-        console.error('Invalid positions response format:', data);
-        throw new Error('Invalid positions response format from backend');
-      }
+        const response = await fetch(
+          `${process.env.NEXT_PUBLIC_API_URL}/api/satellites/positions?` +
+          new URLSearchParams({
+            satId,
+            lat: userLocation.lat,
+            lng: userLocation.lng,
+            alt: 0,
+            seconds: 2
+          })
+        );
 
-      if (data.positions.length > 0) {
-        useStore.getState().setSatellitePosition(satId, data.positions[0]);
-      } else {
-        console.warn('No position data available for satellite:', satId);
+        if (!response.ok) {
+          if (response.status === 429 && retryCount < maxRetries) { // Rate limit error
+            retryCount++;
+            const delay = 3000 * retryCount; // Exponential backoff
+            console.log(`Rate limited, retry ${retryCount} after ${delay}ms delay...`);
+            await new Promise(resolve => setTimeout(resolve, delay));
+            return fetchWithRetry();
+          }
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+        
+        if (!data || !data.info || !data.positions || !Array.isArray(data.positions)) {
+          throw new Error('Invalid positions response format from backend');
+        }
+
+        if (data.positions.length > 0) {
+          useStore.getState().setSatellitePosition(satId, data.positions[0]);
+        } else {
+          console.warn('No position data available for satellite:', satId);
+        }
+      } catch (error) {
+        if (retryCount < maxRetries && 
+            (error.message.includes('rate') || error.message.includes('429'))) {
+          retryCount++;
+          const delay = 3000 * retryCount;
+          console.log(`Error fetching position, retry ${retryCount} after ${delay}ms delay...`);
+          await new Promise(resolve => setTimeout(resolve, delay));
+          return fetchWithRetry();
+        }
+        throw error;
       }
+    };
+
+    try {
+      await fetchWithRetry();
     } catch (error) {
-      console.error('Failed to fetch satellite position:', error);
-      useStore.getState().setError(error.message);
+      console.error(`Failed to fetch satellite ${satId} position after ${maxRetries} retries:`, error);
+      // Don't set global error for individual satellite failures
+      // useStore.getState().setError(error.message);
     }
   },
 
-  fetchPositionsInBatches: async (satellites, batchSize = 5) => {
+  fetchPositionsInBatches: async (satellites, batchSize = 3) => {
     try {
       const batches = [];
-      for (let i = 0; i < satellites.length; i += batchSize) {
-        batches.push(satellites.slice(i, i + batchSize));
+      // Process only visible satellites first
+      const visibleSats = satellites.slice(0, 50); // Limit to 50 satellites for performance
+      
+      for (let i = 0; i < visibleSats.length; i += batchSize) {
+        batches.push(visibleSats.slice(i, i + batchSize));
       }
 
-      for (const batch of batches) {
-        await Promise.all(batch.map(sat => useStore.getState().fetchSatellitePositions(sat.satid)));
-        // Add delay between batches to respect rate limits
-        if (batches.indexOf(batch) < batches.length - 1) {
-          await new Promise(resolve => setTimeout(resolve, 3000));
+      console.log(`Processing ${visibleSats.length} satellites in ${batches.length} batches`);
+
+      for (let i = 0; i < batches.length; i++) {
+        const batch = batches[i];
+        try {
+          // Process each satellite in the batch sequentially to avoid overwhelming the server
+          for (const sat of batch) {
+            await useStore.getState().fetchSatellitePositions(sat.satid);
+            // Small delay between individual requests
+            await new Promise(resolve => setTimeout(resolve, 500));
+          }
+          
+          // Larger delay between batches
+          if (i < batches.length - 1) {
+            console.log(`Completed batch ${i + 1}/${batches.length}, waiting before next batch...`);
+            await new Promise(resolve => setTimeout(resolve, 2000));
+          }
+        } catch (batchError) {
+          console.error(`Error processing batch ${i + 1}:`, batchError);
+          // Continue with next batch even if current one fails
+          continue;
         }
       }
     } catch (error) {
-      useStore.getState().setError(error.message);
+      console.error('Error in batch processing:', error);
+      useStore.getState().setError('Failed to fetch satellite positions: ' + error.message);
     }
   },
 
