@@ -9,6 +9,8 @@
     { "src": "backend/src/index.mjs", "use": "@vercel/node" }
   ],
   "routes": [
+    { "src": "/api/satellites/above", "dest": "backend/src/index.mjs" },
+    { "src": "/api/satellites/positions", "dest": "backend/src/index.mjs" },
     { "src": "/api/(.*)", "dest": "backend/src/index.mjs" },
     { "src": "/(.*)", "dest": "frontend/$1" }
   ]

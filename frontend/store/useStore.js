@@ -89,14 +89,16 @@ const useStore = create((set) => ({
         alt: 0
       });
       
-      // Construct the API URL
-      const baseUrl = process.env.NEXT_PUBLIC_API_URL.endsWith('/api')
-        ? process.env.NEXT_PUBLIC_API_URL.slice(0, -4) // Remove trailing '/api'
-        : process.env.NEXT_PUBLIC_API_URL;
+      // Always use /api prefix in production
+      const apiUrl = `${process.env.NEXT_PUBLIC_API_URL}/api/satellites/above?${params}`;
+      console.log('Making request to:', apiUrl);
       
-      const response = await fetch(
-        `${baseUrl}/satellites/above?${params}`
-      );
+      const response = await fetch(apiUrl, {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json'
+        }
+      });
 
       if (!response.ok) {
         const error = await response.json();
@@ -141,21 +143,21 @@ const useStore = create((set) => ({
           return;
         }
 
-        // Construct API URL
-        const baseUrl = process.env.NEXT_PUBLIC_API_URL.endsWith('/api')
-          ? process.env.NEXT_PUBLIC_API_URL.slice(0, -4)
-          : process.env.NEXT_PUBLIC_API_URL;
+        const apiUrl = `${process.env.NEXT_PUBLIC_API_URL}/api/satellites/positions?${new URLSearchParams({
+        satId,
+        lat: userLocation.lat,
+        lng: userLocation.lng,
+        alt: 0,
+        seconds: 2
+      })}`;
+      console.log('Fetching positions from:', apiUrl);
 
-        const response = await fetch(
-          `${baseUrl}/satellites/positions?` +
-          new URLSearchParams({
-            satId,
-            lat: userLocation.lat,
-            lng: userLocation.lng,
-            alt: 0,
-            seconds: 2
-          })
-        );
+      const response = await fetch(apiUrl, {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json'
+        }
+      });
 
         if (!response.ok) {
           if (response.status === 429 && retryCount < maxRetries) {
