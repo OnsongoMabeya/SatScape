@@ -4,18 +4,24 @@ import { useEffect, useState } from 'react';
 import { Viewer, Entity } from 'resium';
 import * as Cesium from 'cesium';
 import useStore from '../store/useStore';
+import getConfig from 'next/config';
 import 'cesium/Build/Cesium/Widgets/widgets.css';
+
+const { publicRuntimeConfig } = getConfig() || {};
 
 // Configure Cesium
 window.CESIUM_BASE_URL = '/cesium';
 
-// Configure Cesium Ion token from environment variable
-if (!process.env.NEXT_PUBLIC_CESIUM_ION_TOKEN) {
-  console.warn('Cesium Ion token not found in environment variables');
-}
-Cesium.Ion.defaultAccessToken = process.env.NEXT_PUBLIC_CESIUM_ION_TOKEN;
-
 export default function Globe() {
+  // Configure Cesium Ion token
+  useEffect(() => {
+    if (!publicRuntimeConfig?.NEXT_PUBLIC_CESIUM_ION_TOKEN) {
+      console.warn('Cesium Ion token not found in environment variables');
+      return;
+    }
+    Cesium.Ion.defaultAccessToken = publicRuntimeConfig.NEXT_PUBLIC_CESIUM_ION_TOKEN;
+  }, []);
+
   const { userLocation, satellites, satellitePositions, selectedSatellite } = useStore();
   const [viewer, setViewer] = useState(null);
 
