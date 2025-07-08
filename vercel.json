@@ -1,9 +1,10 @@
 {
   "framework": "nextjs",
   "outputDirectory": "frontend/.next",
-  "buildCommand": "cd frontend && npm install --force && npm run build",
-  "installCommand": "cd frontend && npm install --force",
+  "buildCommand": "cd frontend && npm install && npm run build",
+  "installCommand": "cd frontend && npm install",
   "rewrites": [
     { "source": "/(.*)", "destination": "/frontend/$1" }
-  ]
+  ],
+  "root": "frontend"
 }
