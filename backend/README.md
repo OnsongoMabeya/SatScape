@@ -263,7 +263,16 @@ npm run dev
 - Input sanitization
 - Error message sanitization
 
-## Production Deployment
+## Deployment
+
+### Vercel Deployment
+
+The backend is automatically deployed as serverless functions when you deploy the project to Vercel. Make sure to:
+
+1. Set the `N2YO_API_KEY` environment variable in your Vercel project settings
+2. The backend will be available at `/api/*` endpoints on your Vercel deployment
+
+### Manual Deployment
 
 1. Install dependencies:
 

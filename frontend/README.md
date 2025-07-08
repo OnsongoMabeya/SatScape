@@ -46,8 +46,9 @@ npm install
 # Copy environment file
 cp .env.example .env
 
-# Set API URL and Cesium Ion token
-echo "NEXT_PUBLIC_API_URL=http://localhost:5000" >> .env
+# Set environment variables
+NEXT_PUBLIC_API_URL=http://localhost:5000  # Use your Vercel URL in production
+NEXT_PUBLIC_CESIUM_ION_TOKEN=your_token_here
 echo "NEXT_PUBLIC_CESIUM_ION_TOKEN=your-cesium-ion-token-here" >> .env
 ```
 

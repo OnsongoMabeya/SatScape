@@ -109,6 +109,18 @@ Once running, access:
 
 ## Deployment
 
+### Vercel Deployment
+
+1. Fork or clone this repository
+2. Import your repository to Vercel
+3. Set the following environment variables in your Vercel project settings:
+   - `NEXT_PUBLIC_API_URL`: Your Vercel deployment URL (e.g., `https://your-app.vercel.app`)
+   - `NEXT_PUBLIC_CESIUM_ION_TOKEN`: Your Cesium Ion access token
+   - `N2YO_API_KEY`: Your N2YO API key
+4. Deploy! Vercel will automatically build and deploy both frontend and backend
+
+### Manual Deployment
+
 Build for production:
 
 ```bash
@@ -148,24 +160,3 @@ The N2YO API has the following rate limits:
 - `/above` endpoint: 100 requests/hour
 - `/positions` endpoint: 1000 requests/hour
 - `/tle` endpoint: 1000 requests/hour
-
-## Tech Stackk
-
-- Frontend:
-  - Next.js
-  - CesiumJS/Resium
-  - Material UI
-  - Zustand (State Management)
-
-- Backend:
-  - Express.js
-  - Node-Cache (Caching)
-  - CORS
-
-## Contributingg
-
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add some amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
