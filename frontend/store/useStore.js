@@ -2,6 +2,24 @@
 
 import { create } from 'zustand';
 
+// Cache for satellite positions with timestamps
+const positionCache = new Map();
+const CACHE_DURATION = 2000; // 2 seconds cache duration
+const DEBOUNCE_DELAY = 500; // 500ms debounce delay
+
+// Debounce function
+const debounce = (func, wait) => {
+  let timeout;
+  return function executedFunction(...args) {
+    const later = () => {
+      clearTimeout(timeout);
+      func(...args);
+    };
+    clearTimeout(timeout);
+    timeout = setTimeout(later, wait);
+  };
+};
+
 const useStore = create((set) => ({
   // User location state
   userLocation: null,
@@ -70,8 +88,14 @@ const useStore = create((set) => ({
         lng: userLocation.lng,
         alt: 0
       });
+      
+      // Construct the API URL
+      const baseUrl = process.env.NEXT_PUBLIC_API_URL.endsWith('/api')
+        ? process.env.NEXT_PUBLIC_API_URL.slice(0, -4) // Remove trailing '/api'
+        : process.env.NEXT_PUBLIC_API_URL;
+      
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/satellites/above?${params}`.replace('/api/', '/')
+        `${baseUrl}/satellites/above?${params}`
       );
 
       if (!response.ok) {
@@ -100,6 +124,14 @@ const useStore = create((set) => ({
     const maxRetries = 2;
     let retryCount = 0;
 
+    // Check cache first
+    const cached = positionCache.get(satId);
+    const now = Date.now();
+    if (cached && (now - cached.timestamp) < CACHE_DURATION) {
+      useStore.getState().setSatellitePosition(satId, cached.position);
+      return;
+    }
+
     const fetchWithRetry = async () => {
       try {
         const { userLocation } = useStore.getState();
@@ -109,8 +141,13 @@ const useStore = create((set) => ({
           return;
         }
 
+        // Construct API URL
+        const baseUrl = process.env.NEXT_PUBLIC_API_URL.endsWith('/api')
+          ? process.env.NEXT_PUBLIC_API_URL.slice(0, -4)
+          : process.env.NEXT_PUBLIC_API_URL;
+
         const response = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/satellites/positions?` +
+          `${baseUrl}/satellites/positions?` +
           new URLSearchParams({
             satId,
             lat: userLocation.lat,
@@ -121,7 +158,7 @@ const useStore = create((set) => ({
         );
 
         if (!response.ok) {
-          if (response.status === 429 && retryCount < maxRetries) { // Rate limit error
+          if (response.status === 429 && retryCount < maxRetries) {
             retryCount++;
             const delay = 3000 * retryCount; // Exponential backoff
             console.log(`Rate limited, retry ${retryCount} after ${delay}ms delay...`);
@@ -138,7 +175,13 @@ const useStore = create((set) => ({
         }
 
         if (data.positions.length > 0) {
-          useStore.getState().setSatellitePosition(satId, data.positions[0]);
+          const position = data.positions[0];
+          // Update cache
+          positionCache.set(satId, {
+            position,
+            timestamp: Date.now()
+          });
+          useStore.getState().setSatellitePosition(satId, position);
         } else {
           console.warn('No position data available for satellite:', satId);
         }
@@ -155,13 +198,16 @@ const useStore = create((set) => ({
       }
     };
 
-    try {
-      await fetchWithRetry();
-    } catch (error) {
-      console.error(`Failed to fetch satellite ${satId} position after ${maxRetries} retries:`, error);
-      // Don't set global error for individual satellite failures
-      // useStore.getState().setError(error.message);
-    }
+    // Debounce the fetch call
+    const debouncedFetch = debounce(async () => {
+      try {
+        await fetchWithRetry();
+      } catch (error) {
+        useStore.getState().setError(error);
+      }
+    }, DEBOUNCE_DELAY);
+
+    debouncedFetch();
   },
 
   fetchPositionsInBatches: async (satellites, batchSize = 3) => {
@@ -174,28 +220,15 @@ const useStore = create((set) => ({
         batches.push(visibleSats.slice(i, i + batchSize));
       }
 
-      console.log(`Processing ${visibleSats.length} satellites in ${batches.length} batches`);
-
-      for (let i = 0; i < batches.length; i++) {
-        const batch = batches[i];
-        try {
-          // Process each satellite in the batch sequentially to avoid overwhelming the server
-          for (const sat of batch) {
-            await useStore.getState().fetchSatellitePositions(sat.satid);
-            // Small delay between individual requests
-            await new Promise(resolve => setTimeout(resolve, 500));
-          }
-          
-          // Larger delay between batches
-          if (i < batches.length - 1) {
-            console.log(`Completed batch ${i + 1}/${batches.length}, waiting before next batch...`);
-            await new Promise(resolve => setTimeout(resolve, 2000));
-          }
-        } catch (batchError) {
-          console.error(`Error processing batch ${i + 1}:`, batchError);
-          // Continue with next batch even if current one fails
-          continue;
-        }
+      // Process batches with delay between them
+      for (const batch of batches) {
+        await Promise.all(
+          batch.map(satellite =>
+            useStore.getState().fetchSatellitePositions(satellite.satid)
+          )
+        );
+        // Increased delay between batches to reduce server load
+        await new Promise(resolve => setTimeout(resolve, 2000));
       }
     } catch (error) {
       console.error('Error in batch processing:', error);
