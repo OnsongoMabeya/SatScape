@@ -89,8 +89,9 @@ const useStore = create((set) => ({
         alt: 0
       });
       
-      // Always use /api prefix in production
-      const apiUrl = `${process.env.NEXT_PUBLIC_API_URL}/api/satellites/above?${params}`;
+      // Construct API URL without duplicate /api prefix
+      const baseUrl = process.env.NEXT_PUBLIC_API_URL;
+      const apiUrl = `${baseUrl}${baseUrl.endsWith('/') ? '' : '/'}api/satellites/above?${params}`;
       console.log('Making request to:', apiUrl);
       
       const response = await fetch(apiUrl, {

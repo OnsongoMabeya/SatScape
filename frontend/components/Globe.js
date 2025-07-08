@@ -3,28 +3,29 @@
 import dynamic from 'next/dynamic';
 import { useEffect, useState } from 'react';
 import useStore from '../store/useStore';
-
-// Dynamically import Cesium components with no SSR
-const CesiumViewer = dynamic(
-  () => import('resium').then(mod => {
-    // Configure Cesium after import
-    const Cesium = require('cesium');
-    window.CESIUM_BASE_URL = '/cesium';
-    return mod.Viewer;
-  }),
-  { ssr: false }
-);
-
-const CesiumEntity = dynamic(
-  () => import('resium').then(mod => mod.Entity),
-  { ssr: false }
-);
-
-// Import Cesium styles
 import 'cesium/Build/Cesium/Widgets/widgets.css';
 
-// Import Cesium for types
-const Cesium = typeof window !== 'undefined' ? require('cesium') : null;
+// Dynamically import Resium components with SSR disabled
+const ResiumComponents = dynamic(
+  () => 
+    import('resium').then((mod) => {
+      if (typeof window !== 'undefined') {
+        const Cesium = require('cesium');
+        window.CESIUM_BASE_URL = '/cesium';
+      }
+      return {
+        Viewer: mod.Viewer,
+        Entity: mod.Entity
+      };
+    }),
+  { ssr: false }
+);
+
+// Import Cesium only on client side
+let Cesium;
+if (typeof window !== 'undefined') {
+  Cesium = require('cesium');
+}
 
 export default function Globe() {
   // Configure Cesium Ion token
@@ -140,7 +141,7 @@ export default function Globe() {
   if (!Cesium) return null;
 
   return (
-    <CesiumViewer
+    <ResiumComponents.Viewer
       full
       ref={(e) => {
         if (e?.cesiumElement) {
@@ -149,33 +150,31 @@ export default function Globe() {
       }}
       timeline={false}
       animation={false}
-      baseLayerPicker={true}
-      navigationHelpButton={false}
-      sceneModePicker={true}
-      homeButton={true}
-      geocoder={false}
-      scene3DOnly={false}
+      baseLayerPicker={false}
+      onClick={handleMapClick}
     >
       {userLocation && (
-        <CesiumEntity
-          position={Cesium.Cartesian3.fromDegrees(
+        <ResiumComponents.Entity
+          position={Cesium?.Cartesian3.fromDegrees(
             userLocation.lng,
             userLocation.lat,
             0
           )}
-          point={{ pixelSize: 10, color: Cesium.Color.YELLOW }}
+          point={{
+            pixelSize: 10,
+            color: Cesium?.Color.RED,
+            outlineColor: Cesium?.Color.WHITE,
+            outlineWidth: 2
+          }}
         />
       )}
-      {satellites?.map((satellite) => {
-        console.log('Rendering satellite:', satellite.satid);
+
+      {satellites?.map(satellite => {
         const satPosition = satellitePositions[satellite.satid];
-        if (!satPosition) {
-          console.log('No position data for satellite:', satellite.satid);
-          return null;
-        }
-        
+        if (!satPosition || !Cesium) return null;
+
         return (
-          <CesiumEntity
+          <ResiumComponents.Entity
             key={satellite.satid}
             position={Cesium.Cartesian3.fromDegrees(
               satPosition.satlongitude,
@@ -211,6 +210,6 @@ export default function Globe() {
           />
         );
       })}
-    </CesiumViewer>
+    </ResiumComponents.Viewer>
   );
 }
